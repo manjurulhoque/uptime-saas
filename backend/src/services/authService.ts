@@ -26,7 +26,7 @@ interface User {
 
 class AuthService {
     private readonly saltRounds = 12;
-    private readonly accessTokenExpiry = "15m";
+    private readonly accessTokenExpiry = "1d";
     private readonly refreshTokenExpiry = "7d";
 
     private generateTokens(userId: number, email: string): TokenPair {

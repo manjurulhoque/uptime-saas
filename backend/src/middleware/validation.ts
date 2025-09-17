@@ -95,6 +95,34 @@ export const authSchemas = {
         }),
 };
 
+// Monitor validation schemas
+export const monitorSchemas = {
+    create: z.object({
+        url: z.url("Please provide a valid URL"),
+        interval: z
+            .number({
+                error: "Interval is required",
+            })
+            .int()
+            .min(1, "Interval must be at least 1 minute")
+            .max(1440, "Interval cannot exceed 1440 minutes (24 hours)")
+    }),
+
+    update: z
+        .object({
+            url: z.url("Please provide a valid URL").optional(),
+            interval: z
+                .number()
+                .int()
+                .min(1, "Interval must be at least 1 minute")
+                .max(1440, "Interval cannot exceed 1440 minutes (24 hours)")
+                .optional(),
+        })
+        .refine((data) => Object.keys(data).length > 0, {
+            message: "At least one field must be provided for update",
+        }),
+};
+
 // Error handling middleware
 export const errorHandler = (
     error: Error,
