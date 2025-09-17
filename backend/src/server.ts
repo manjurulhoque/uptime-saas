@@ -10,13 +10,14 @@ import swaggerUi from "swagger-ui-express";
 import logger from "./config/logger";
 import { morganStream } from "./config/logger";
 import {
-  corsOptions,
-  generalRateLimit,
-  securityHeaders,
-  requestLogger,
+    corsOptions,
+    generalRateLimit,
+    securityHeaders,
+    requestLogger,
 } from "./middleware/security";
 import { errorHandler, notFoundHandler } from "./middleware/validation";
 import authRoutes from "./routes/auth";
+import monitorsRoutes from "./routes/monitors";
 import { swaggerSpec } from "./config/swagger";
 
 // Load environment variables
@@ -54,12 +55,12 @@ app.use(requestLogger);
  *               $ref: '#/components/schemas/HealthCheck'
  */
 app.get("/", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || "development",
-  });
+    res.json({
+        status: "OK",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || "development",
+    });
 });
 
 /**
@@ -79,27 +80,28 @@ app.get("/", (req, res) => {
  */
 // Health check endpoint
 app.get("/health", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || "development",
-  });
+    res.json({
+        status: "OK",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || "development",
+    });
 });
 
 // Swagger documentation
 app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
-    explorer: true,
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "Uptime SaaS API Documentation",
-  }),
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+        explorer: true,
+        customCss: ".swagger-ui .topbar { display: none }",
+        customSiteTitle: "Uptime SaaS API Documentation",
+    }),
 );
 
 // API routes
 app.use("/api/auth", authRoutes);
+app.use("/api/monitors", monitorsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
@@ -109,39 +111,39 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  logger.info(`🚀 Server is running on http://localhost:${PORT}`, {
-    port: PORT,
-    environment: process.env.NODE_ENV || "development",
-    nodeVersion: process.version,
-  });
+    logger.info(`🚀 Server is running on http://localhost:${PORT}`, {
+        port: PORT,
+        environment: process.env.NODE_ENV || "development",
+        nodeVersion: process.version,
+    });
 });
 
 // Graceful shutdown
 process.on("SIGTERM", () => {
-  logger.info("SIGTERM received, shutting down gracefully");
-  process.exit(0);
+    logger.info("SIGTERM received, shutting down gracefully");
+    process.exit(0);
 });
 
 process.on("SIGINT", () => {
-  logger.info("SIGINT received, shutting down gracefully");
-  process.exit(0);
+    logger.info("SIGINT received, shutting down gracefully");
+    process.exit(0);
 });
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
-  logger.error("Uncaught Exception", {
-    error: error.message,
-    stack: error.stack,
-  });
-  process.exit(1);
+    logger.error("Uncaught Exception", {
+        error: error.message,
+        stack: error.stack,
+    });
+    process.exit(1);
 });
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
-  logger.error("Unhandled Rejection", {
-    reason: reason instanceof Error ? reason.message : reason,
-    stack: reason instanceof Error ? reason.stack : undefined,
-    promise: promise.toString(),
-  });
-  process.exit(1);
+    logger.error("Unhandled Rejection", {
+        reason: reason instanceof Error ? reason.message : reason,
+        stack: reason instanceof Error ? reason.stack : undefined,
+        promise: promise.toString(),
+    });
+    process.exit(1);
 });

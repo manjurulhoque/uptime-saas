@@ -34,10 +34,10 @@ const colorize = winston.format.colorize({ all: true });
 // Define format for console output
 const consoleFormat = winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:ms" }),
-    winston.format.errors({ stack: true }),
-    winston.format.printf(
-        (info) => `${info.timestamp} ${info.level}: ${info.message}`
-    ),
+    // winston.format.errors({ stack: true }),
+    // winston.format.printf(
+    //     (info) => `${info.timestamp} ${info.level}: ${info.message}`
+    // ),
     winston.format.json()
 );
 

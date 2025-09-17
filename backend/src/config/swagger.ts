@@ -18,7 +18,7 @@ const swaggerDefinition: SwaggerDefinition = {
   },
   servers: [
     {
-      url: process.env.API_URL || "http://localhost:3001",
+      url: process.env.API_URL || "http://localhost:9900",
       description: "Development server",
     },
     {
