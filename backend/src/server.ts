@@ -12,13 +12,13 @@ import logger from "./config/logger";
 import {
     corsOptions,
     generalRateLimit,
-    securityHeaders,
     requestLogger,
 } from "./middleware/security";
 import { errorHandler, notFoundHandler } from "./middleware/validation";
 import authRoutes from "./routes/auth";
 import monitorsRoutes from "./routes/monitors";
 import { swaggerSpec } from "./config/swagger";
+import monitoringService from "./services/monitoringService";
 
 // Load environment variables
 dotenv.config();
@@ -95,7 +95,8 @@ app.use(
     swaggerUi.setup(swaggerSpec, {
         explorer: true,
         customCss: ".swagger-ui .topbar { display: none }",
-        customCssUrl: "https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-material.css",
+        customCssUrl:
+            "https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-material.css",
         customSiteTitle: "Uptime SaaS API Documentation",
     }),
 );
@@ -120,13 +121,15 @@ app.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
     logger.info("SIGTERM received, shutting down gracefully");
+    await monitoringService.shutdown();
     process.exit(0);
 });
 
-process.on("SIGINT", () => {
+process.on("SIGINT", async () => {
     logger.info("SIGINT received, shutting down gracefully");
+    await monitoringService.shutdown();
     process.exit(0);
 });
 
