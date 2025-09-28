@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import logger from "../config/logger";
 import { authenticateToken } from "../middleware/auth";
 import { validate, monitorSchemas } from "../middleware/validation";
-import { MonitorExistsError, InternalServerError } from "../utils/errors";
+import { MonitorExistsError, InternalServerError, MonitorNotFoundError } from "../utils/errors";
 import prisma from "../db";
 
 const router = Router();
@@ -193,5 +193,39 @@ router.post(
         }
     },
 );
+
+router.get("/:id", authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const monitor = await prisma.monitor.findUnique({
+            where: { id: parseInt(req.params.id), userId: req.user?.id },
+        });
+
+        if (!monitor) {
+            throw new MonitorNotFoundError();
+        }
+
+        res.status(200).json({ data: { monitor } });
+    }
+    catch (error) {
+        logger.error("Get monitor endpoint error", {
+            error: error instanceof Error ? error.message : "Unknown error",
+            userId: req.user?.id,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+        });
+
+        if (error instanceof MonitorNotFoundError) {
+            return res.status(error.statusCode).json({
+                error: error.message,
+                code: error.code,
+            });
+        }
+
+        res.status(500).json({
+            error: "Internal server error",
+            code: "INTERNAL_SERVER_ERROR",
+        });
+    }
+});
 
 export default router;
