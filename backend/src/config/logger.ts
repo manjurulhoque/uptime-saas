@@ -60,10 +60,10 @@ const logger = winston.createLogger({
 });
 
 // Create a stream object with a 'write' function that will be used by morgan
-export const morganStream = {
-    write: (message: string) => {
-        logger.http(message.trim());
-    },
-};
+// export const morganStream = {
+//     write: (message: string) => {
+//         logger.http(message.trim());
+//     },
+// };
 
 export default logger;

@@ -8,7 +8,7 @@ import swaggerUi from "swagger-ui-express";
 
 // Import custom modules
 import logger from "./config/logger";
-import { morganStream } from "./config/logger";
+// import { morganStream } from "./config/logger";
 import {
     corsOptions,
     generalRateLimit,
@@ -36,7 +36,7 @@ app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
 // Logging middleware
-app.use(morgan("combined", { stream: morganStream }));
+// app.use(morgan("combined", { stream: morganStream }));
 app.use(requestLogger);
 
 /**
