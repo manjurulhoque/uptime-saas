@@ -228,4 +228,71 @@ router.get("/:id", authenticateToken, async (req: Request, res: Response) => {
     }
 });
 
+router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
+    try {
+
+        const { url, interval } = req.body;
+
+        const existingMonitor = await prisma.monitor.findFirst({
+            where: { id: parseInt(req.params.id), userId: req.user?.id as number },
+        });
+
+        if (!existingMonitor) {
+            throw new MonitorNotFoundError("Monitor not found");
+        }
+
+        if (existingMonitor.url !== url) {
+            const existingMonitorWithSameUrl = await prisma.monitor.findFirst({
+                where: { url, userId: req.user?.id as number },
+            });
+            
+            if (existingMonitorWithSameUrl) {
+                throw new MonitorExistsError("Monitor with same URL already exists");
+            }
+        }
+
+        const monitor = await prisma.monitor.update({
+            where: { id: parseInt(req.params.id), userId: req.user?.id },
+            data: { url, interval },
+        });
+
+        logger.info("Monitor updated successfully", {
+            monitorId: monitor.id,
+            userId: req.user?.id,
+            url: monitor.url,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+        });
+
+        res.status(200).json({ data: { monitor } });
+    }
+    catch (error) {
+        logger.error("Update monitor endpoint error", {
+            error: error instanceof Error ? error.message : "Unknown error",
+            userId: req.user?.id,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+        });
+
+        if (error instanceof MonitorNotFoundError) {
+            return res.status(error.statusCode).json({
+                error: error.message,
+                code: error.code,
+            });
+        }
+
+        if (error instanceof InternalServerError) {
+            return res.status(error.statusCode).json({
+                error: error.message,
+                code: error.code,
+            });
+        }
+
+        res.status(500).json({
+            error: "Internal server error",
+            code: "INTERNAL_SERVER_ERROR",
+        });
+    }
+});
+
 export default router;
