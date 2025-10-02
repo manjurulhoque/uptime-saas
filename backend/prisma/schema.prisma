@@ -15,8 +15,13 @@ datasource db {
 
 model User {
   id               Int       @id @default(autoincrement())
+  firstName        String?
+  lastName         String?
   email            String    @unique
   passwordHash     String
+  isActive         Boolean   @default(true)
+  isAdmin          Boolean   @default(false)
+  lastLoginAt      DateTime?
   monitors         Monitor[]
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
