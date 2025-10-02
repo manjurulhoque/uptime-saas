@@ -414,8 +414,7 @@ class MonitoringService {
 
             const totalChecks = checks.length;
             const upChecks = checks.filter((c) => c.status === "UP").length;
-            const uptimePercentage =
-                totalChecks > 0 ? (upChecks / totalChecks) * 100 : 0;
+            const uptimePercentage = totalChecks > 0 ? (upChecks / totalChecks) * 100 : 0;
 
             const avgResponseTime =
                 checks

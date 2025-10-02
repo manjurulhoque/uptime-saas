@@ -39,21 +39,7 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 // app.use(morgan("combined", { stream: morganStream }));
 app.use(requestLogger);
 
-/**
- * @swagger
- * /:
- *   get:
- *     summary: Root endpoint
- *     description: Get basic server information and status
- *     tags: [System]
- *     responses:
- *       200:
- *         description: Server information retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/HealthCheck'
- */
+
 app.get("/", (req, res) => {
     res.json({
         status: "OK",
@@ -63,21 +49,7 @@ app.get("/", (req, res) => {
     });
 });
 
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check endpoint
- *     description: Check the health status of the server
- *     tags: [System]
- *     responses:
- *       200:
- *         description: Server is healthy
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/HealthCheck'
- */
+
 // Health check endpoint
 app.get("/health", (req, res) => {
     res.json({

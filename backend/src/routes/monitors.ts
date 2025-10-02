@@ -12,39 +12,6 @@ import monitoringService from "../services/monitoringService";
 
 const router = Router();
 
-/**
- * @swagger
- * /api/monitors:
- *   get:
- *     summary: Get all monitors
- *     description: Get all monitors for the authenticated user
- *     tags: [Monitors]
- *     responses:
- *       200:
- *         description: Monitors retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Monitor'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Internal server error"
- *               code: "INTERNAL_SERVER_ERROR"
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Unauthorized"
- *               code: "UNAUTHORIZED"
- */
 router.get("/", authenticateToken, async (req: Request, res: Response) => {
     try {
         const monitors = await prisma.monitor.findMany({
@@ -73,66 +40,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @swagger
- * /api/monitors:
- *   post:
- *     summary: Create a new monitor
- *     description: Create a new monitor for the authenticated user
- *     tags: [Monitors]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Monitor'
- *           example:
- *             url: "https://www.google.com"
- *             interval: 5
- *     responses:
- *       201:
- *         description: Monitor created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Monitor'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Internal server error"
- *               code: "INTERNAL_SERVER_ERROR"
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Unauthorized"
- *               code: "UNAUTHORIZED"
- *       400:
- *         description: Invalid input data
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Invalid input data"
- *               code: "INVALID_INPUT_DATA"
- *       409:
- *         description: Monitor already exists
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Monitor already exists"
- *               code: "MONITOR_EXISTS"
- */
+// create new monitor
 router.post(
     "/",
     authenticateToken,
@@ -202,6 +110,7 @@ router.post(
     },
 );
 
+// get monitor by id
 router.get("/:id", authenticateToken, async (req: Request, res: Response) => {
     try {
         const monitor = await prisma.monitor.findUnique({
@@ -235,9 +144,10 @@ router.get("/:id", authenticateToken, async (req: Request, res: Response) => {
     }
 });
 
+// update monitor
 router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
     try {
-        const { url, interval } = req.body;
+        const { url, interval, } = req.body;
 
         const existingMonitor = await prisma.monitor.findFirst({
             where: {
@@ -308,53 +218,43 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @swagger
- * /api/monitors/{id}/delete:
- *   delete:
- *     summary: Delete a monitor
- *     description: Delete a monitor and stop its monitoring
- *     tags: [Monitors]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Monitor ID
- *     responses:
- *       200:
- *         description: Monitor deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *             example:
- *               message: "Monitor deleted successfully"
- *       404:
- *         description: Monitor not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Monitor not found"
- *               code: "MONITOR_NOT_FOUND"
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
+// update monitor status
+router.put("/:id/status", authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const { isActive } = req.body;
+
+        const monitor = await prisma.monitor.update({
+            where: { id: parseInt(req.params.id), userId: req.user?.id },
+            data: { isActive },
+        });
+
+        await monitoringService.updateMonitoring(monitor.id);
+
+        logger.info("Monitor status updated successfully", {
+            monitorId: monitor.id,
+            userId: req.user?.id,
+            isActive,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+        });
+        
+        res.status(200).json({ data: { monitor } });
+    } catch (error) {
+        logger.error("Update monitor status endpoint error", {
+            error: error instanceof Error ? error.message : "Unknown error",
+            userId: req.user?.id,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+        });
+
+        res.status(500).json({
+            error: "Internal server error",
+            code: "INTERNAL_SERVER_ERROR",
+        });
+    }
+});
+
+// delete monitor
 router.delete(
     "/:id",
     authenticateToken,
@@ -411,77 +311,7 @@ router.delete(
     },
 );
 
-/**
- * @swagger
- * /api/monitors/{id}/stats:
- *   get:
- *     summary: Get monitor statistics
- *     description: Get uptime statistics and performance data for a monitor
- *     tags: [Monitors]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Monitor ID
- *       - in: query
- *         name: days
- *         required: false
- *         schema:
- *           type: integer
- *           default: 30
- *         description: Number of days to include in statistics
- *     responses:
- *       200:
- *         description: Monitor statistics retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 stats:
- *                   type: object
- *                   properties:
- *                     totalChecks:
- *                       type: integer
- *                     upChecks:
- *                       type: integer
- *                     downChecks:
- *                       type: integer
- *                     uptimePercentage:
- *                       type: number
- *                     avgResponseTime:
- *                       type: number
- *                     incidents:
- *                       type: integer
- *                     lastCheck:
- *                       type: string
- *                       format: date-time
- *                     lastIncident:
- *                       type: string
- *                       format: date-time
- *       404:
- *         description: Monitor not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
+// get monitor stats
 router.get(
     "/:id/stats",
     authenticateToken,
@@ -530,77 +360,7 @@ router.get(
     },
 );
 
-/**
- * @swagger
- * /api/monitors/{id}/checks:
- *   get:
- *     summary: Get monitor check history
- *     description: Get recent check results for a monitor
- *     tags: [Monitors]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Monitor ID
- *       - in: query
- *         name: limit
- *         required: false
- *         schema:
- *           type: integer
- *           default: 100
- *         description: Maximum number of checks to return
- *     responses:
- *       200:
- *         description: Monitor checks retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: object
- *                   properties:
- *                     checks:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: integer
- *                           status:
- *                             type: string
- *                           statusCode:
- *                             type: integer
- *                           responseTime:
- *                             type: integer
- *                           errorMessage:
- *                             type: string
- *                           checkedAt:
- *                             type: string
- *                             format: date-time
- *       404:
- *         description: Monitor not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
+// get monitor checks
 router.get(
     "/:id/checks",
     authenticateToken,
@@ -650,78 +410,7 @@ router.get(
     },
 );
 
-/**
- * @swagger
- * /api/monitors/{id}/incidents:
- *   get:
- *     summary: Get monitor incidents
- *     description: Get incident history for a monitor
- *     tags: [Monitors]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Monitor ID
- *       - in: query
- *         name: limit
- *         required: false
- *         schema:
- *           type: integer
- *           default: 50
- *         description: Maximum number of incidents to return
- *     responses:
- *       200:
- *         description: Monitor incidents retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: object
- *                   properties:
- *                     incidents:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: integer
- *                           status:
- *                             type: string
- *                           startedAt:
- *                             type: string
- *                             format: date-time
- *                           endedAt:
- *                             type: string
- *                             format: date-time
- *                           duration:
- *                             type: integer
- *                           description:
- *                             type: string
- *       404:
- *         description: Monitor not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
+// get monitor incidents
 router.get(
     "/:id/incidents",
     authenticateToken,
