@@ -5,7 +5,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  // output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -15,16 +15,16 @@ datasource db {
 
 model User {
   id               Int       @id @default(autoincrement())
-  firstName        String?
-  lastName         String?
+  first_name        String?
+  last_name         String?
   email            String    @unique
-  passwordHash     String
-  isActive         Boolean   @default(true)
-  isAdmin          Boolean   @default(false)
-  lastLoginAt      DateTime?
+  password_hash     String
+  is_active         Boolean   @default(true)
+  is_admin          Boolean   @default(false)
+  last_login_at      DateTime?
   monitors         Monitor[]
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
   @@map("users")
 }
@@ -33,13 +33,13 @@ model Monitor {
   id            Int      @id @default(autoincrement())
   url           String
   interval      Int      @default(5) // minutes
-  lastStatus    String?  // e.g., "200", "DOWN"
-  lastCheckedAt DateTime?
-  isActive      Boolean  @default(true)
-  user          User     @relation(fields: [userId], references: [id])
-  userId        Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  last_status    String?  // e.g., "200", "DOWN"
+  last_checked_at DateTime?
+  is_active      Boolean  @default(true)
+  user          User     @relation(fields: [user_id], references: [id])
+  user_id        Int
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
   
   // Relations
   checks        MonitorCheck[]
@@ -50,30 +50,30 @@ model Monitor {
 
 model MonitorCheck {
   id            Int      @id @default(autoincrement())
-  monitorId     Int
+  monitor_id     Int
   status        String   // "UP", "DOWN", "TIMEOUT", "ERROR"
   statusCode    Int?     // HTTP status code
   responseTime  Int?     // Response time in milliseconds
   errorMessage  String?  // Error message if check failed
-  checkedAt     DateTime @default(now())
+  checked_at     DateTime @default(now())
   
   // Relations
-  monitor       Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  monitor       Monitor  @relation(fields: [monitor_id], references: [id], onDelete: Cascade)
 
   @@map("monitor_checks")
 }
 
 model Incident {
   id            Int      @id @default(autoincrement())
-  monitorId     Int
+  monitor_id     Int
   status        String   // "DOWN", "UP" (when incident is resolved)
-  startedAt     DateTime @default(now())
-  endedAt       DateTime?
+  started_at     DateTime @default(now())
+  ended_at       DateTime?
   duration      Int?     // Duration in minutes
   description   String?  // Incident description
   
   // Relations
-  monitor       Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  monitor       Monitor  @relation(fields: [monitor_id], references: [id], onDelete: Cascade)
 
   @@map("incidents")
 }

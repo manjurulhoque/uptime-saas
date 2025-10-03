@@ -15,7 +15,7 @@ const router = Router();
 router.get("/", authenticateToken, async (req: Request, res: Response) => {
     try {
         const monitors = await prisma.monitor.findMany({
-            where: { userId: req.user?.id },
+            where: { user_id: req.user?.id },
         });
         res.status(200).json({ data: { monitors } });
     } catch (error) {
@@ -50,7 +50,7 @@ router.post(
             const { url, interval } = req.body;
 
             const existingMonitor = await prisma.monitor.findFirst({
-                where: { url, userId: req.user?.id as number },
+                where: { url, user_id: req.user?.id as number },
             });
 
             if (existingMonitor) {
@@ -61,7 +61,7 @@ router.post(
                 data: {
                     url,
                     interval,
-                    userId: req.user!.id,
+                    user_id: req.user!.id,
                 },
             });
 
@@ -114,7 +114,7 @@ router.post(
 router.get("/:id", authenticateToken, async (req: Request, res: Response) => {
     try {
         const monitor = await prisma.monitor.findUnique({
-            where: { id: parseInt(req.params.id), userId: req.user?.id },
+            where: { id: parseInt(req.params.id), user_id: req.user?.id },
         });
 
         if (!monitor) {
@@ -152,7 +152,7 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
         const existingMonitor = await prisma.monitor.findFirst({
             where: {
                 id: parseInt(req.params.id),
-                userId: req.user?.id as number,
+                user_id: req.user?.id as number,
             },
         });
 
@@ -162,7 +162,7 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
 
         if (existingMonitor.url !== url) {
             const existingMonitorWithSameUrl = await prisma.monitor.findFirst({
-                where: { url, userId: req.user?.id as number },
+                where: { url, user_id: req.user?.id as number },
             });
 
             if (existingMonitorWithSameUrl) {
@@ -173,7 +173,7 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
         }
 
         const monitor = await prisma.monitor.update({
-            where: { id: parseInt(req.params.id), userId: req.user?.id },
+            where: { id: parseInt(req.params.id), user_id: req.user?.id },
             data: { url, interval },
         });
 
@@ -224,8 +224,8 @@ router.put("/:id/status", authenticateToken, async (req: Request, res: Response)
         const { isActive } = req.body;
 
         const monitor = await prisma.monitor.update({
-            where: { id: parseInt(req.params.id), userId: req.user?.id },
-            data: { isActive },
+            where: { id: parseInt(req.params.id), user_id: req.user?.id },
+            data: { is_active: isActive },
         });
 
         await monitoringService.updateMonitoring(monitor.id);
@@ -233,7 +233,7 @@ router.put("/:id/status", authenticateToken, async (req: Request, res: Response)
         logger.info("Monitor status updated successfully", {
             monitorId: monitor.id,
             userId: req.user?.id,
-            isActive,
+            is_active: isActive,
             ip: req.ip,
             userAgent: req.get("User-Agent"),
         });
@@ -263,7 +263,7 @@ router.delete(
             const monitorId = parseInt(req.params.id);
 
             const existingMonitor = await prisma.monitor.findFirst({
-                where: { id: monitorId, userId: req.user?.id as number },
+                where: { id: monitorId, user_id: req.user?.id as number },
             });
 
             if (!existingMonitor) {
@@ -322,7 +322,7 @@ router.get(
 
             // Verify monitor belongs to user
             const monitor = await prisma.monitor.findFirst({
-                where: { id: monitorId, userId: req.user?.id as number },
+                where: { id: monitorId, user_id: req.user?.id as number },
             });
 
             if (!monitor) {
@@ -371,7 +371,7 @@ router.get(
 
             // Verify monitor belongs to user
             const monitor = await prisma.monitor.findFirst({
-                where: { id: monitorId, userId: req.user?.id as number },
+                where: { id: monitorId, user_id: req.user?.id as number },
             });
 
             if (!monitor) {
@@ -379,8 +379,8 @@ router.get(
             }
 
             const checks = await prisma.monitorCheck.findMany({
-                where: { monitorId },
-                orderBy: { checkedAt: "desc" },
+                where: { monitor_id: monitorId },
+                orderBy: { checked_at: "desc" },
                 take: limit,
             });
 
@@ -421,7 +421,7 @@ router.get(
 
             // Verify monitor belongs to user
             const monitor = await prisma.monitor.findFirst({
-                where: { id: monitorId, userId: req.user?.id as number },
+                where: { id: monitorId, user_id: req.user?.id as number },
             });
 
             if (!monitor) {
@@ -429,8 +429,8 @@ router.get(
             }
 
             const incidents = await prisma.incident.findMany({
-                where: { monitorId },
-                orderBy: { startedAt: "desc" },
+                where: { monitor_id: monitorId },
+                orderBy: { started_at: "desc" },
                 take: limit,
             });
 

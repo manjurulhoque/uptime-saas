@@ -4,6 +4,8 @@ import prisma from "../db";
 import logger from "../config/logger";
 
 interface RegisterData {
+    first_name: string;
+    last_name: string;
     email: string;
     password: string;
 }
@@ -20,8 +22,10 @@ interface TokenPair {
 
 interface User {
     id: number;
+    first_name: string | null;
+    last_name: string | null;
     email: string;
-    createdAt: Date;
+    created_at: Date;
 }
 
 class AuthService {
@@ -73,13 +77,17 @@ class AuthService {
             // Create user
             const user = await prisma.user.create({
                 data: {
+                    first_name: data.first_name,
+                    last_name: data.last_name,
                     email: data.email,
-                    passwordHash,
+                    password_hash: passwordHash,
                 },
                 select: {
                     id: true,
+                    first_name: true,
+                    last_name: true,
                     email: true,
-                    createdAt: true,
+                    created_at: true,
                 },
             });
 
@@ -118,7 +126,7 @@ class AuthService {
             // Verify password
             const isValidPassword = await bcrypt.compare(
                 data.password,
-                user.passwordHash
+                user.password_hash
             );
 
             if (!isValidPassword) {
@@ -140,8 +148,10 @@ class AuthService {
             return {
                 user: {
                     id: user.id,
+                    first_name: user.first_name || "",
+                    last_name: user.last_name || "",
                     email: user.email,
-                    createdAt: user.createdAt,
+                    created_at: user.created_at,
                 },
                 tokens,
             };
@@ -216,7 +226,7 @@ class AuthService {
             // Verify current password
             const isValidPassword = await bcrypt.compare(
                 currentPassword,
-                user.passwordHash
+                user.password_hash
             );
 
             if (!isValidPassword) {
@@ -238,7 +248,7 @@ class AuthService {
             // Update password
             await prisma.user.update({
                 where: { id: userId },
-                data: { passwordHash: newPasswordHash },
+                data: { password_hash: newPasswordHash },
             });
 
             logger.info("Password changed successfully", {

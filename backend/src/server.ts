@@ -1,7 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
-import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";

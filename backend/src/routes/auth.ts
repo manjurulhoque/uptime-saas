@@ -6,71 +6,15 @@ import logger from "../config/logger";
 
 const router = Router();
 
-/**
- * @swagger
- * /api/auth/register:
- *   post:
- *     summary: Register a new user
- *     description: Create a new user account with email and password
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RegisterRequest'
- *           example:
- *             email: "user@example.com"
- *             password: "password123"
- *     responses:
- *       201:
- *         description: User registered successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "User registered successfully"
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
- *       409:
- *         description: User already exists
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "User with this email already exists"
- *               code: "USER_EXISTS"
- *       400:
- *         description: Invalid input data
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Registration failed"
- *               code: "REGISTRATION_ERROR"
- */
 // Register endpoint
 router.post(
     "/register",
     validate(authSchemas.register),
     async (req: Request, res: Response) => {
         try {
-            const { email, password } = req.body;
+            const { first_name, last_name, email, password } = req.body;
 
-            const result = await authService.register({ email, password });
+            const result = await authService.register({ first_name, last_name, email, password });
 
             logger.info("User registration successful", {
                 userId: result.user.id,
@@ -83,8 +27,10 @@ router.post(
                 message: "User registered successfully",
                 user: {
                     id: result.user.id,
+                    first_name: result.user.first_name,
+                    last_name: result.user.last_name,
                     email: result.user.email,
-                    createdAt: result.user.createdAt,
+                    created_at: result.user.created_at,
                 },
                 tokens: result.tokens,
             });
@@ -114,62 +60,6 @@ router.post(
     },
 );
 
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login user
- *     description: Authenticate user with email and password
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/LoginRequest'
- *           example:
- *             email: "user@example.com"
- *             password: "password123"
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Login successful"
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
- *       401:
- *         description: Invalid credentials
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Invalid credentials"
- *               code: "INVALID_CREDENTIALS"
- *       400:
- *         description: Invalid input data
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Login failed"
- *               code: "LOGIN_ERROR"
- */
 // Login endpoint
 router.post(
     "/login",
@@ -192,7 +82,7 @@ router.post(
                 user: {
                     id: result.user.id,
                     email: result.user.email,
-                    createdAt: result.user.createdAt,
+                    created_at: result.user.created_at,
                 },
                 tokens: result.tokens,
             });
@@ -222,59 +112,6 @@ router.post(
     },
 );
 
-/**
- * @swagger
- * /api/auth/refresh:
- *   post:
- *     summary: Refresh access token
- *     description: Get new access token using refresh token
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RefreshTokenRequest'
- *           example:
- *             refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *     responses:
- *       200:
- *         description: Tokens refreshed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tokens refreshed successfully"
- *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
- *       401:
- *         description: Invalid refresh token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Invalid refresh token"
- *               code: "INVALID_REFRESH_TOKEN"
- *       400:
- *         description: Invalid input data
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Token refresh failed"
- *               code: "REFRESH_ERROR"
- */
 // Refresh token endpoint
 router.post(
     "/refresh",
@@ -319,67 +156,6 @@ router.post(
     },
 );
 
-/**
- * @swagger
- * /api/auth/change-password:
- *   post:
- *     summary: Change user password
- *     description: Change the password for the authenticated user
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/ChangePasswordRequest'
- *           example:
- *             currentPassword: "oldpassword123"
- *             newPassword: "newpassword123"
- *     responses:
- *       200:
- *         description: Password changed successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *             example:
- *               message: "Password changed successfully"
- *       400:
- *         description: Invalid current password
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Current password is incorrect"
- *               code: "INVALID_CURRENT_PASSWORD"
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       404:
- *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "User not found"
- *               code: "USER_NOT_FOUND"
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Password change failed"
- *               code: "PASSWORD_CHANGE_ERROR"
- */
 // Change password endpoint
 router.post(
     "/change-password",
@@ -438,40 +214,6 @@ router.post(
     },
 );
 
-/**
- * @swagger
- * /api/auth/logout:
- *   post:
- *     summary: Logout user
- *     description: Logout the authenticated user and invalidate tokens
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Logout successful
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *             example:
- *               message: "Logout successful"
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Logout failed"
- *               code: "LOGOUT_ERROR"
- */
 // Logout endpoint
 router.post(
     "/logout",
@@ -507,45 +249,6 @@ router.post(
     },
 );
 
-/**
- * @swagger
- * /api/auth/me:
- *   get:
- *     summary: Get current user profile
- *     description: Get the profile information of the authenticated user
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: User profile retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *             example:
- *               user:
- *                 id: "123e4567-e89b-12d3-a456-426614174000"
- *                 email: "user@example.com"
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               error: "Failed to get user profile"
- *               code: "PROFILE_ERROR"
- */
 // Get current user profile
 router.get("/me", authenticateToken, async (req: Request, res: Response) => {
     try {

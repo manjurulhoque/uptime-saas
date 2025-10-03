@@ -33,7 +33,7 @@ class MonitoringService {
 
             // Load all active monitors and start their jobs
             const activeMonitors = await prisma.monitor.findMany({
-                where: { isActive: true },
+                where: { is_active: true },
             });
 
             for (const monitor of activeMonitors) {
@@ -68,7 +68,7 @@ class MonitoringService {
                 where: { id: monitorId },
             });
 
-            if (!monitor || !monitor.isActive) {
+            if (!monitor || !monitor.is_active) {
                 logger.warn(`Monitor ${monitorId} not found or inactive`);
                 return;
             }
@@ -146,7 +146,7 @@ class MonitoringService {
                 where: { id: monitorId },
             });
 
-            if (!monitor || !monitor.isActive) {
+            if (!monitor || !monitor.is_active) {
                 logger.warn(
                     `Monitor ${monitorId} not found or inactive during check`,
                 );
@@ -261,7 +261,7 @@ class MonitoringService {
         try {
             await prisma.monitorCheck.create({
                 data: {
-                    monitorId,
+                    monitor_id: monitorId,
                     status: result.status,
                     statusCode: result.statusCode,
                     responseTime: result.responseTime,
@@ -290,8 +290,8 @@ class MonitoringService {
             await prisma.monitor.update({
                 where: { id: monitorId },
                 data: {
-                    lastStatus: result.status,
-                    lastCheckedAt: new Date(),
+                    last_status: result.status,
+                    last_checked_at: new Date(),
                 },
             });
         } catch (error) {
@@ -317,8 +317,8 @@ class MonitoringService {
                 where: { id: monitorId },
                 include: {
                     incidents: {
-                        where: { endedAt: null }, // Only active incidents
-                        orderBy: { startedAt: "desc" },
+                        where: { ended_at: null }, // Only active incidents
+                        orderBy: { started_at: "desc" },
                         take: 1,
                     },
                 },
@@ -336,7 +336,7 @@ class MonitoringService {
                 // Start new incident
                 await prisma.incident.create({
                     data: {
-                        monitorId,
+                        monitor_id: monitorId,
                         status: "DOWN",
                         description:
                             result.errorMessage ||
@@ -353,7 +353,7 @@ class MonitoringService {
             } else if (!isDown && activeIncident) {
                 // End existing incident
                 const duration = Math.floor(
-                    (Date.now() - activeIncident.startedAt.getTime()) /
+                    (Date.now() - activeIncident.started_at.getTime()) /
                         (1000 * 60),
                 );
 
@@ -361,7 +361,7 @@ class MonitoringService {
                     where: { id: activeIncident.id },
                     data: {
                         status: "UP",
-                        endedAt: new Date(),
+                        ended_at: new Date(),
                         duration,
                     },
                 });
@@ -394,22 +394,22 @@ class MonitoringService {
 
             const checks = await prisma.monitorCheck.findMany({
                 where: {
-                    monitorId,
-                    checkedAt: {
+                    monitor_id: monitorId,
+                    checked_at: {
                         gte: startDate,
                     },
                 },
-                orderBy: { checkedAt: "desc" },
+                orderBy: { checked_at: "desc" },
             });
 
             const incidents = await prisma.incident.findMany({
                 where: {
-                    monitorId,
-                    startedAt: {
+                    monitor_id: monitorId,
+                    started_at: {
                         gte: startDate,
                     },
                 },
-                orderBy: { startedAt: "desc" },
+                orderBy: { started_at: "desc" },
             });
 
             const totalChecks = checks.length;
@@ -429,8 +429,8 @@ class MonitoringService {
                 uptimePercentage: Math.round(uptimePercentage * 100) / 100,
                 avgResponseTime: Math.round(avgResponseTime),
                 incidents: incidents.length,
-                lastCheck: checks[0]?.checkedAt || null,
-                lastIncident: incidents[0]?.startedAt || null,
+                lastCheck: checks[0]?.checked_at || null,
+                lastIncident: incidents[0]?.started_at || null,
             };
         } catch (error) {
             logger.error(`Failed to get stats for monitor ${monitorId}`, {

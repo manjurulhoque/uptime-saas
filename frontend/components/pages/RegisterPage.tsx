@@ -5,9 +5,11 @@ import Link from "next/link";
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
+        first_name: "",
+        last_name: "",
         email: "",
         password: "",
-        confirmPassword: "",
+        confirm_password: "",
         agreeToTerms: false,
     });
     const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +46,45 @@ const RegisterPage = () => {
                 {/* Registration Form */}
                 <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                     <form className="space-y-6" onSubmit={handleSubmit}>
+                        <div>
+                            <label
+                                htmlFor="first_name"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                First name
+                            </label>
+                            <input
+                                id="first_name"
+                                name="first_name"
+                                type="text"
+                                autoComplete="first_name"
+                                required
+                                value={formData.first_name}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                placeholder="Enter your first name"
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                htmlFor="last_name"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Last name
+                            </label>
+                            <input
+                                id="last_name"
+                                name="last_name"
+                                type="text"
+                                autoComplete="last_name"
+                                required
+                                value={formData.last_name}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                placeholder="Enter your last name"
+                            />
+                        </div>
                         <div>
                             <label
                                 htmlFor="email"
@@ -89,18 +130,18 @@ const RegisterPage = () => {
 
                         <div>
                             <label
-                                htmlFor="confirmPassword"
+                                htmlFor="confirm_password"
                                 className="block text-sm font-medium text-gray-700 mb-2"
                             >
                                 Confirm password
                             </label>
                             <input
                                 id="confirmPassword"
-                                name="confirmPassword"
+                                name="confirm_password"
                                 type="password"
                                 autoComplete="new-password"
                                 required
-                                value={formData.confirmPassword}
+                                value={formData.confirm_password}
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                 placeholder="Confirm your password"
