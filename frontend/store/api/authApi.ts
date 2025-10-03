@@ -48,6 +48,7 @@ export const authApi = api.injectEndpoints({
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 try {
                     const { data } = await queryFulfilled;
+                    console.log("Registration data:", data);
                     if (data.success && typeof window !== "undefined") {
                         localStorage.setItem(
                             ACCESS_TOKEN_KEY,

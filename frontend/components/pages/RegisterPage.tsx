@@ -1,25 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRegisterMutation } from "@/store/api/authApi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const RegisterPage = () => {
+    const [isClient, setIsClient] = useState(false);
     const [formData, setFormData] = useState({
         first_name: "",
         last_name: "",
         email: "",
         password: "",
         confirm_password: "",
-        agreeToTerms: false,
     });
-    const [isLoading, setIsLoading] = useState(false);
+    const [register, { isLoading, error: registerError }] = useRegisterMutation();
+    const router = useRouter();
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    if (!isClient) {
+        return <div>Loading...</div>;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
-        // TODO: Implement registration logic
-        console.log("Registration attempt:", formData);
-        setTimeout(() => setIsLoading(false), 2000);
+        try {
+            await register(formData);
+            if (registerError) {
+                toast.error("Registration failed");
+            } else {
+                toast.success("Registration successful");
+                router.push("/login");
+            }
+        } catch (error) {
+            console.error("Registration failed:", error);
+            console.error("Registration error:", registerError);
+            toast.error(error instanceof Error ? error.message : "Registration failed");
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,8 +176,6 @@ const RegisterPage = () => {
                                     name="agreeToTerms"
                                     type="checkbox"
                                     required
-                                    checked={formData.agreeToTerms}
-                                    onChange={handleChange}
                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                 />
                             </div>
@@ -185,7 +204,7 @@ const RegisterPage = () => {
 
                         <button
                             type="submit"
-                            disabled={isLoading || !formData.agreeToTerms}
+                            disabled={isLoading}
                             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                         >
                             {isLoading ? (

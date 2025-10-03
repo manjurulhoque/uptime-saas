@@ -16,8 +16,8 @@ interface LoginData {
 }
 
 interface TokenPair {
-    accessToken: string;
-    refreshToken: string;
+    access_token: string;
+    refresh_token: string;
 }
 
 interface User {
@@ -26,6 +26,8 @@ interface User {
     last_name: string | null;
     email: string;
     created_at: Date;
+    is_admin: boolean;
+    is_active: boolean;
 }
 
 class AuthService {
@@ -49,7 +51,7 @@ class AuthService {
             expiresIn: this.refreshTokenExpiry,
         });
 
-        return { accessToken, refreshToken };
+        return { access_token: accessToken, refresh_token: refreshToken };
     }
 
     async register(
@@ -88,6 +90,8 @@ class AuthService {
                     last_name: true,
                     email: true,
                     created_at: true,
+                    is_admin: true,
+                    is_active: true,
                 },
             });
 
@@ -95,7 +99,7 @@ class AuthService {
             const tokens = this.generateTokens(user.id, user.email);
 
             logger.info("User registered successfully", {
-                userId: user.id,
+                user_id: user.id,
                 email: user.email,
             });
 
@@ -114,6 +118,16 @@ class AuthService {
             // Find user
             const user = await prisma.user.findUnique({
                 where: { email: data.email },
+                select: {
+                    id: true,
+                    first_name: true,
+                    last_name: true,
+                    email: true,
+                    created_at: true,
+                    is_admin: true,
+                    is_active: true,
+                    password_hash: true,
+                },
             });
 
             if (!user) {
@@ -131,7 +145,7 @@ class AuthService {
 
             if (!isValidPassword) {
                 logger.warn("Login attempt with invalid password", {
-                    userId: user.id,
+                    user_id: user.id,
                     email: data.email,
                 });
                 throw new Error("Invalid credentials");
@@ -141,7 +155,7 @@ class AuthService {
             const tokens = this.generateTokens(user.id, user.email);
 
             logger.info("User logged in successfully", {
-                userId: user.id,
+                user_id: user.id,
                 email: user.email,
             });
 
@@ -152,6 +166,8 @@ class AuthService {
                     last_name: user.last_name || "",
                     email: user.email,
                     created_at: user.created_at,
+                    is_admin: user.is_admin,
+                    is_active: user.is_active,
                 },
                 tokens,
             };
@@ -186,7 +202,7 @@ class AuthService {
 
             if (!user) {
                 logger.warn("Refresh token for non-existent user", {
-                    userId: decoded.userId,
+                    user_id: decoded.userId,
                 });
                 throw new Error("Invalid refresh token");
             }
@@ -195,7 +211,7 @@ class AuthService {
             const tokens = this.generateTokens(user.id, user.email);
 
             logger.info("Tokens refreshed successfully", {
-                userId: user.id,
+                user_id: user.id,
                 email: user.email,
             });
 
@@ -233,7 +249,7 @@ class AuthService {
                 logger.warn(
                     "Password change attempt with invalid current password",
                     {
-                        userId,
+                        user_id: userId,
                     }
                 );
                 throw new Error("Current password is incorrect");
@@ -252,25 +268,25 @@ class AuthService {
             });
 
             logger.info("Password changed successfully", {
-                userId,
+                user_id: userId,
             });
         } catch (error) {
             logger.error("Password change failed", {
                 error: error instanceof Error ? error.message : "Unknown error",
-                userId,
+                user_id: userId,
             });
             throw error;
         }
     }
 
     async logout(userId: number): Promise<void> {
-        // In a more sophisticated implementation, you might want to:
+        // In a more sophisticated implementation, we might want to:
         // 1. Store refresh tokens in a database and invalidate them
         // 2. Use a token blacklist
         // 3. Implement token revocation
 
         logger.info("User logged out", {
-            userId,
+            user_id: userId,
         });
     }
 }

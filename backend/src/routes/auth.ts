@@ -3,6 +3,7 @@ import authService from "../services/authService";
 import { authenticateToken } from "../middleware/auth";
 import { validate, authSchemas } from "../middleware/validation";
 import logger from "../config/logger";
+import { successResponse, errorResponse } from "../utils/response";
 
 const router = Router();
 
@@ -23,8 +24,7 @@ router.post(
                 userAgent: req.get("User-Agent"),
             });
 
-            res.status(201).json({
-                message: "User registered successfully",
+            res.status(201).json(successResponse({
                 user: {
                     id: result.user.id,
                     first_name: result.user.first_name,
@@ -33,7 +33,7 @@ router.post(
                     created_at: result.user.created_at,
                 },
                 tokens: result.tokens,
-            });
+            }));
         } catch (error) {
             logger.error("Registration endpoint error", {
                 error: error instanceof Error ? error.message : "Unknown error",
@@ -46,16 +46,10 @@ router.post(
                 error instanceof Error &&
                 error.message === "User with this email already exists"
             ) {
-                return res.status(409).json({
-                    error: "User with this email already exists",
-                    code: "USER_EXISTS",
-                });
+                return res.status(409).json(errorResponse("User with this email already exists", "USER_EXISTS"));
             }
 
-            res.status(500).json({
-                error: "Registration failed",
-                code: "REGISTRATION_ERROR",
-            });
+            res.status(500).json(errorResponse("Registration failed", "REGISTRATION_ERROR"));
         }
     },
 );
@@ -77,15 +71,18 @@ router.post(
                 userAgent: req.get("User-Agent"),
             });
 
-            res.json({
-                message: "Login successful",
+            res.status(200).json(successResponse({
                 user: {
                     id: result.user.id,
                     email: result.user.email,
+                    first_name: result.user.first_name,
+                    last_name: result.user.last_name,
+                    is_admin: result.user.is_admin,
+                    is_active: result.user.is_active,
                     created_at: result.user.created_at,
                 },
                 tokens: result.tokens,
-            });
+            }));
         } catch (error) {
             logger.error("Login endpoint error", {
                 error: error instanceof Error ? error.message : "Unknown error",
@@ -98,16 +95,10 @@ router.post(
                 error instanceof Error &&
                 error.message === "Invalid credentials"
             ) {
-                return res.status(401).json({
-                    error: "Invalid credentials",
-                    code: "INVALID_CREDENTIALS",
-                });
+                return res.status(401).json(errorResponse("Invalid credentials", "INVALID_CREDENTIALS"));
             }
 
-            res.status(500).json({
-                error: "Login failed",
-                code: "LOGIN_ERROR",
-            });
+            res.status(500).json(errorResponse("Login failed", "LOGIN_ERROR"));
         }
     },
 );
@@ -127,10 +118,11 @@ router.post(
                 userAgent: req.get("User-Agent"),
             });
 
-            res.json({
-                message: "Tokens refreshed successfully",
-                tokens,
-            });
+            res.status(200).json(successResponse({
+                data: {
+                    tokens,
+                }
+            }));
         } catch (error) {
             logger.error("Token refresh endpoint error", {
                 error: error instanceof Error ? error.message : "Unknown error",
@@ -142,16 +134,10 @@ router.post(
                 error instanceof Error &&
                 error.message === "Invalid refresh token"
             ) {
-                return res.status(401).json({
-                    error: "Invalid refresh token",
-                    code: "INVALID_REFRESH_TOKEN",
-                });
+                return res.status(401).json(errorResponse("Invalid refresh token", "INVALID_REFRESH_TOKEN"));
             }
 
-            res.status(500).json({
-                error: "Token refresh failed",
-                code: "REFRESH_ERROR",
-            });
+            res.status(500).json(errorResponse("Token refresh failed", "REFRESH_ERROR"));
         }
     },
 );
@@ -178,9 +164,7 @@ router.post(
                 userAgent: req.get("User-Agent"),
             });
 
-            res.json({
-                message: "Password changed successfully",
-            });
+            res.status(200).json(successResponse());
         } catch (error) {
             logger.error("Password change endpoint error", {
                 error: error instanceof Error ? error.message : "Unknown error",
@@ -193,23 +177,14 @@ router.post(
                 error instanceof Error &&
                 error.message === "Current password is incorrect"
             ) {
-                return res.status(400).json({
-                    error: "Current password is incorrect",
-                    code: "INVALID_CURRENT_PASSWORD",
-                });
+                return res.status(400).json(errorResponse("Current password is incorrect", "INVALID_CURRENT_PASSWORD"));
             }
 
             if (error instanceof Error && error.message === "User not found") {
-                return res.status(404).json({
-                    error: "User not found",
-                    code: "USER_NOT_FOUND",
-                });
+                return res.status(404).json(errorResponse("User not found", "USER_NOT_FOUND"));
             }
 
-            res.status(500).json({
-                error: "Password change failed",
-                code: "PASSWORD_CHANGE_ERROR",
-            });
+            res.status(500).json(errorResponse("Password change failed", "PASSWORD_CHANGE_ERROR"));
         }
     },
 );
@@ -230,9 +205,7 @@ router.post(
                 userAgent: req.get("User-Agent"),
             });
 
-            res.json({
-                message: "Logout successful",
-            });
+            res.status(200).json(successResponse());
         } catch (error) {
             logger.error("Logout endpoint error", {
                 error: error instanceof Error ? error.message : "Unknown error",
@@ -241,10 +214,7 @@ router.post(
                 userAgent: req.get("User-Agent"),
             });
 
-            res.status(500).json({
-                error: "Logout failed",
-                code: "LOGOUT_ERROR",
-            });
+            res.status(500).json(errorResponse("Logout failed", "LOGOUT_ERROR"));
         }
     },
 );
@@ -260,12 +230,12 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
             userAgent: req.get("User-Agent"),
         });
 
-        res.json({
+        res.status(200).json(successResponse({
             user: {
                 id: user.id,
                 email: user.email,
             },
-        });
+        }));
     } catch (error) {
         logger.error("Get profile endpoint error", {
             error: error instanceof Error ? error.message : "Unknown error",
@@ -274,10 +244,7 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
             userAgent: req.get("User-Agent"),
         });
 
-        res.status(500).json({
-            error: "Failed to get user profile",
-            code: "PROFILE_ERROR",
-        });
+        res.status(500).json(errorResponse("Failed to get user profile", "PROFILE_ERROR"));
     }
 });
 
