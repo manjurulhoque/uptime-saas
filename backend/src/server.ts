@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import cors from "cors";
 import helmet from "helmet";
-import swaggerUi from "swagger-ui-express";
 
 // Import custom modules
 import logger from "./config/logger";
@@ -16,7 +15,6 @@ import {
 import { errorHandler, notFoundHandler } from "./middleware/validation";
 import authRoutes from "./routes/auth";
 import monitorsRoutes from "./routes/monitors";
-import { swaggerSpec } from "./config/swagger";
 import monitoringService from "./services/monitoringService";
 
 // Load environment variables
@@ -58,19 +56,6 @@ app.get("/health", (req, res) => {
         environment: process.env.NODE_ENV || "development",
     });
 });
-
-// Swagger documentation
-app.use(
-    "/api-docs",
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec, {
-        explorer: true,
-        customCss: ".swagger-ui .topbar { display: none }",
-        customCssUrl:
-            "https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-material.css",
-        customSiteTitle: "Uptime SaaS API Documentation",
-    }),
-);
 
 // API routes
 app.use("/api/auth", authRoutes);

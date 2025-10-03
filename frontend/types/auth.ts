@@ -38,18 +38,6 @@ export interface AuthResponse {
     };
 }
 
-export interface ProfileUpdateRequest {
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-}
-
-export interface ProfileResponse {
-    success: boolean;
-    message: string;
-    data: User;
-}
-
 export interface RefreshTokenRequest {
     refresh_token: string;
 }
