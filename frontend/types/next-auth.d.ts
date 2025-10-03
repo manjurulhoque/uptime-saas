@@ -5,37 +5,34 @@ declare module "next-auth" {
         user: {
             id: string;
             email: string;
-            name: string;
-            firstName: string;
-            lastName: string;
-            isAdmin: boolean;
-            isActive: boolean;
+            first_name: string;
+            last_name: string;
+            is_admin: boolean;
+            is_active: boolean;
         };
-        accessToken: string;
-        refreshToken: string;
+        access_token: string;
+        refresh_token: string;
     }
 
     interface User {
         id: string;
         email: string;
-        name: string;
-        firstName: string;
-        lastName: string;
-        isAdmin: boolean;
-        isActive: boolean;
-        emailVerified: boolean;
-        accessToken: string;
-        refreshToken: string;
+        first_name: string;
+        last_name: string;
+        is_admin: boolean;
+        is_active: boolean;
+        access_token: string;
+        refresh_token: string;
     }
 }
 
 declare module "next-auth/jwt" {
     interface JWT {
-        accessToken: string;
-        refreshToken: string;
-        isAdmin: boolean;
-        isActive: boolean;
-        firstName: string;
-        lastName: string;
+        access_token: string;
+        refresh_token: string;
+        is_admin: boolean;
+        is_active: boolean;
+        first_name: string;
+        last_name: string;
     }
 }

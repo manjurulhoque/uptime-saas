@@ -46,8 +46,8 @@ export function useAuth() {
     };
 
     const isAuthenticated = status === "authenticated";
-    const isAdmin = session?.user?.isAdmin || false;
-    const isActive = session?.user?.isActive || false;
+    const isAdmin = session?.user?.is_admin || false;
+    const isActive = session?.user?.is_active || false;
 
     // isLoading should be true when session is loading OR when performing auth actions
     const isLoading = status === "loading" || isActionLoading;
