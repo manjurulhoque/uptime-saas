@@ -43,11 +43,11 @@ class AuthService {
             throw new Error("JWT secrets not configured");
         }
 
-        const accessToken = jwt.sign({ userId, email }, jwtSecret, {
+        const accessToken = jwt.sign({ user_id: userId, email }, jwtSecret, {
             expiresIn: this.accessTokenExpiry,
         });
 
-        const refreshToken = jwt.sign({ userId, email }, refreshSecret, {
+        const refreshToken = jwt.sign({ user_id: userId, email }, refreshSecret, {
             expiresIn: this.refreshTokenExpiry,
         });
 
@@ -196,13 +196,13 @@ class AuthService {
 
             // Check if user still exists
             const user = await prisma.user.findUnique({
-                where: { id: decoded.userId },
+                where: { id: decoded.user_id },
                 select: { id: true, email: true },
             });
 
             if (!user) {
                 logger.warn("Refresh token for non-existent user", {
-                    user_id: decoded.userId,
+                    user_id: decoded.user_id,
                 });
                 throw new Error("Invalid refresh token");
             }
