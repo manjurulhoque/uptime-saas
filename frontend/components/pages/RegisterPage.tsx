@@ -16,7 +16,7 @@ const registerSchema = z
     .object({
         first_name: z.string().min(1, "First name is required"),
         last_name: z.string().min(1, "Last name is required"),
-        email: z.string().email("Invalid email address"),
+        email: z.email("Invalid email address"),
         password: z
             .string()
             .min(8, "Password must be at least 8 characters long")
@@ -40,8 +40,7 @@ const RegisterPage = () => {
     const [isClient, setIsClient] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [register, { isLoading, error: registerError }] =
-        useRegisterMutation();
+    const [register, { isLoading, error: registerError }] = useRegisterMutation();
     const router = useRouter();
 
     // Initialize react-hook-form
@@ -49,11 +48,11 @@ const RegisterPage = () => {
         register: registerField,
         handleSubmit,
         setError,
-        formState: { errors },
+        formState: { errors, isValid },
         clearErrors,
     } = useForm<RegisterFormData>({
         resolver: zodResolver(registerSchema),
-        mode: "onBlur",
+        mode: "onChange",
     });
 
     useEffect(() => {
@@ -92,7 +91,7 @@ const RegisterPage = () => {
             clearErrors();
 
             // Prepare data for API - remove confirm_password and agreeToTerms
-            const { confirm_password, agreeToTerms, ...registerData } = data;
+            const { agreeToTerms, ...registerData } = data;
 
             const result = await register(registerData);
             console.log(result);
@@ -346,7 +345,7 @@ const RegisterPage = () => {
 
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || !isValid}
                             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                         >
                             {isLoading ? (
