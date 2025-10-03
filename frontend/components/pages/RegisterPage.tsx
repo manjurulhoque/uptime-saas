@@ -2,55 +2,118 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useRegisterMutation } from "@/store/api/authApi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import CenterLoader from "../loaders/center-loader";
+import { Eye, EyeOff } from "lucide-react";
+
+// Define the form schema with Zod
+const registerSchema = z
+    .object({
+        first_name: z.string().min(1, "First name is required"),
+        last_name: z.string().min(1, "Last name is required"),
+        email: z.string().email("Invalid email address"),
+        password: z
+            .string()
+            .min(8, "Password must be at least 8 characters long")
+            .regex(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+            ),
+        confirm_password: z.string(),
+        agreeToTerms: z
+            .boolean()
+            .refine((val) => val === true, "You must agree to the terms"),
+    })
+    .refine((data) => data.password === data.confirm_password, {
+        message: "Passwords do not match",
+        path: ["confirm_password"],
+    });
+
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
     const [isClient, setIsClient] = useState(false);
-    const [formData, setFormData] = useState({
-        first_name: "",
-        last_name: "",
-        email: "",
-        password: "",
-        confirm_password: "",
-    });
-    const [register, { isLoading, error: registerError }] = useRegisterMutation();
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [register, { isLoading, error: registerError }] =
+        useRegisterMutation();
     const router = useRouter();
+
+    // Initialize react-hook-form
+    const {
+        register: registerField,
+        handleSubmit,
+        setError,
+        formState: { errors },
+        clearErrors,
+    } = useForm<RegisterFormData>({
+        resolver: zodResolver(registerSchema),
+        mode: "onBlur",
+    });
 
     useEffect(() => {
         setIsClient(true);
     }, []);
 
-    if (!isClient) {
-        return <CenterLoader />;
-    }
+    useEffect(() => {
+        if (registerError && "data" in registerError) {
+            const errorData = registerError.data as any;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+            // Handle server validation errors
+            if (
+                errorData?.data?.errors &&
+                Array.isArray(errorData.data.errors)
+            ) {
+                errorData.data.errors.forEach(
+                    (error: { field: string; message: string }) => {
+                        // Map server field names to form field names if needed
+                        const fieldName = error.field as keyof RegisterFormData;
+                        setError(fieldName, {
+                            type: "server",
+                            message: error.message,
+                        });
+                    }
+                );
+            } else {
+                // Handle general errors
+                toast.error(errorData?.data?.error || "Registration failed");
+            }
+        }
+    }, [registerError, setError]);
+
+    const onSubmit = async (data: RegisterFormData) => {
         try {
-            const result = await register(formData);
+            // Clear previous errors
+            clearErrors();
+
+            // Prepare data for API - remove confirm_password and agreeToTerms
+            const { confirm_password, agreeToTerms, ...registerData } = data;
+
+            const result = await register(registerData);
             console.log(result);
+
             if (result.error) {
-                toast.error("Registration failed");
+                // Error handling is done in useEffect above
             } else {
                 toast.success("Registration successful");
                 router.push("/login");
             }
         } catch (error) {
             console.error("Registration failed:", error);
-            toast.error(error instanceof Error ? error.message : "Registration failed");
+            toast.error(
+                error instanceof Error ? error.message : "Registration failed"
+            );
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type, checked } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
-    };
+    if (!isClient) {
+        return <CenterLoader />;
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-20">
@@ -67,7 +130,10 @@ const RegisterPage = () => {
 
                 {/* Registration Form */}
                 <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                    <form className="space-y-6" onSubmit={handleSubmit}>
+                    <form
+                        className="space-y-6"
+                        onSubmit={handleSubmit(onSubmit)}
+                    >
                         <div>
                             <label
                                 htmlFor="first_name"
@@ -77,15 +143,21 @@ const RegisterPage = () => {
                             </label>
                             <input
                                 id="first_name"
-                                name="first_name"
                                 type="text"
                                 autoComplete="first_name"
-                                required
-                                value={formData.first_name}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                {...registerField("first_name")}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                    errors.first_name
+                                        ? "border-red-300"
+                                        : "border-gray-300"
+                                }`}
                                 placeholder="Enter your first name"
                             />
+                            {errors.first_name && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.first_name.message}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -97,15 +169,21 @@ const RegisterPage = () => {
                             </label>
                             <input
                                 id="last_name"
-                                name="last_name"
                                 type="text"
                                 autoComplete="last_name"
-                                required
-                                value={formData.last_name}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                {...registerField("last_name")}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                    errors.last_name
+                                        ? "border-red-300"
+                                        : "border-gray-300"
+                                }`}
                                 placeholder="Enter your last name"
                             />
+                            {errors.last_name && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.last_name.message}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label
@@ -116,15 +194,21 @@ const RegisterPage = () => {
                             </label>
                             <input
                                 id="email"
-                                name="email"
                                 type="email"
                                 autoComplete="email"
-                                required
-                                value={formData.email}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                {...registerField("email")}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                    errors.email
+                                        ? "border-red-300"
+                                        : "border-gray-300"
+                                }`}
                                 placeholder="Enter your email"
                             />
+                            {errors.email && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.email.message}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -134,19 +218,41 @@ const RegisterPage = () => {
                             >
                                 Password
                             </label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                value={formData.password}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                placeholder="Create a password"
-                            />
+                            <div className="relative">
+                                <input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    autoComplete="new-password"
+                                    {...registerField("password")}
+                                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                        errors.password
+                                            ? "border-red-300"
+                                            : "border-gray-300"
+                                    }`}
+                                    placeholder="Create a password"
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                                    onClick={() =>
+                                        setShowPassword(!showPassword)
+                                    }
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                                    ) : (
+                                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                                    )}
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.password.message}
+                                </p>
+                            )}
                             <p className="mt-1 text-xs text-gray-500">
-                                Must be at least 8 characters long
+                                Must be at least 8 characters with uppercase,
+                                lowercase, number, and special character
                             </p>
                         </div>
 
@@ -157,27 +263,57 @@ const RegisterPage = () => {
                             >
                                 Confirm password
                             </label>
-                            <input
-                                id="confirm_password"
-                                name="confirm_password"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                value={formData.confirm_password}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                placeholder="Confirm your password"
-                            />
+                            <div className="relative">
+                                <input
+                                    id="confirm_password"
+                                    type={
+                                        showConfirmPassword
+                                            ? "text"
+                                            : "password"
+                                    }
+                                    autoComplete="new-password"
+                                    {...registerField("confirm_password")}
+                                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                        errors.confirm_password
+                                            ? "border-red-300"
+                                            : "border-gray-300"
+                                    }`}
+                                    placeholder="Confirm your password"
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                                    onClick={() =>
+                                        setShowConfirmPassword(
+                                            !showConfirmPassword
+                                        )
+                                    }
+                                >
+                                    {showConfirmPassword ? (
+                                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                                    ) : (
+                                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                                    )}
+                                </button>
+                            </div>
+                            {errors.confirm_password && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.confirm_password.message}
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex items-start">
                             <div className="flex items-center h-5">
                                 <input
                                     id="agreeToTerms"
-                                    name="agreeToTerms"
                                     type="checkbox"
-                                    required
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    {...registerField("agreeToTerms")}
+                                    className={`h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
+                                        errors.agreeToTerms
+                                            ? "border-red-300"
+                                            : ""
+                                    }`}
                                 />
                             </div>
                             <div className="ml-3 text-sm">
@@ -200,6 +336,11 @@ const RegisterPage = () => {
                                         Privacy Policy
                                     </a>
                                 </label>
+                                {errors.agreeToTerms && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.agreeToTerms.message}
+                                    </p>
+                                )}
                             </div>
                         </div>
 

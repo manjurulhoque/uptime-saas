@@ -47,6 +47,8 @@ export const validate = (schema: ZodType) => {
 export const authSchemas = {
     register: z
         .object({
+            first_name: z.string().min(1, "First name is required"),
+            last_name: z.string().min(1, "Last name is required"),
             email: z.email("Please provide a valid email address"),
             password: z
                 .string()
