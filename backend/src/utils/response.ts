@@ -5,11 +5,11 @@ export const successResponse = (data?: any) => {
     };
 };
 
-export const errorResponse = (error: string, code?: string) => {
+export const errorResponse = (message: string, code?: string, errors?: any[]) => {
     return {
         success: false,
-        data: null,
-        error,
+        error: message,
+        errors,
         code,
     };
 };

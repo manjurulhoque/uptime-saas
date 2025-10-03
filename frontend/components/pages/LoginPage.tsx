@@ -1,14 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import CenterLoader from "../loaders/center-loader";
 
 const LoginPage = () => {
+    const [isClient, setIsClient] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     });
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    if (!isClient) {
+        return <CenterLoader />;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

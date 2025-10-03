@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z, ZodType } from "zod";
 import logger from "../config/logger";
+import { errorResponse } from "../utils/response";
 
 // Validation middleware factory
 export const validate = (schema: ZodType) => {
@@ -25,11 +26,7 @@ export const validate = (schema: ZodType) => {
                     path: req.path,
                 });
 
-                return res.status(400).json({
-                    error: "Validation failed",
-                    details: errorDetails,
-                    code: "VALIDATION_ERROR",
-                });
+                return res.status(400).json(errorResponse("Validation failed", "VALIDATION_ERROR", errorDetails));
             }
 
             // Handle unexpected errors
@@ -41,10 +38,7 @@ export const validate = (schema: ZodType) => {
                 path: req.path,
             });
 
-            return res.status(500).json({
-                error: "Validation error",
-                code: "VALIDATION_ERROR",
-            });
+            return res.status(500).json(errorResponse("Validation error", "VALIDATION_ERROR"));
         }
     };
 };
@@ -61,11 +55,11 @@ export const authSchemas = {
                     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]/,
                     "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
                 ),
-            confirmPassword: z.string(),
+            confirm_password: z.string(),
         })
-        .refine((data) => data.password === data.confirmPassword, {
+        .refine((data) => data.password === data.confirm_password, {
             message: "Passwords do not match",
-            path: ["confirmPassword"],
+            path: ["confirm_password"],
         }),
 
     login: z.object({
@@ -79,19 +73,19 @@ export const authSchemas = {
 
     changePassword: z
         .object({
-            currentPassword: z.string().min(1, "Current password is required"),
-            newPassword: z
+            current_password: z.string().min(1, "Current password is required"),
+            new_password: z
                 .string()
                 .min(8, "New password must be at least 8 characters long")
                 .regex(
                     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]/,
                     "New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
                 ),
-            confirmNewPassword: z.string(),
+            confirm_new_password: z.string(),
         })
-        .refine((data) => data.newPassword === data.confirmNewPassword, {
+        .refine((data) => data.new_password === data.confirm_new_password, {
             message: "New passwords do not match",
-            path: ["confirmNewPassword"],
+            path: ["confirm_new_password"],
         }),
 };
 
@@ -142,14 +136,7 @@ export const errorHandler = (
         method: req.method,
     });
 
-    res.status(500).json({
-        error: "Internal server error",
-        code: "INTERNAL_ERROR",
-        ...(process.env.NODE_ENV === "development" && {
-            message: error.message,
-            stack: error.stack,
-        }),
-    });
+    res.status(500).json(errorResponse("Internal server error", "INTERNAL_ERROR"));
 };
 
 // 404 handler
@@ -161,10 +148,5 @@ export const notFoundHandler = (req: Request, res: Response) => {
         userAgent: req.get("User-Agent"),
     });
 
-    res.status(404).json({
-        error: "Route not found",
-        code: "NOT_FOUND",
-        path: req.path,
-        method: req.method,
-    });
+    res.status(404).json(errorResponse("Route not found", "NOT_FOUND"));
 };

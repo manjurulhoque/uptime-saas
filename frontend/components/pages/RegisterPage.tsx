@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRegisterMutation } from "@/store/api/authApi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import CenterLoader from "../loaders/center-loader";
 
 const RegisterPage = () => {
     const [isClient, setIsClient] = useState(false);
@@ -23,14 +24,15 @@ const RegisterPage = () => {
     }, []);
 
     if (!isClient) {
-        return <div>Loading...</div>;
+        return <CenterLoader />;
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await register(formData);
-            if (registerError) {
+            const result = await register(formData);
+            console.log(result);
+            if (result.error) {
                 toast.error("Registration failed");
             } else {
                 toast.success("Registration successful");
@@ -38,7 +40,6 @@ const RegisterPage = () => {
             }
         } catch (error) {
             console.error("Registration failed:", error);
-            console.error("Registration error:", registerError);
             toast.error(error instanceof Error ? error.message : "Registration failed");
         }
     };
@@ -157,7 +158,7 @@ const RegisterPage = () => {
                                 Confirm password
                             </label>
                             <input
-                                id="confirmPassword"
+                                id="confirm_password"
                                 name="confirm_password"
                                 type="password"
                                 autoComplete="new-password"
