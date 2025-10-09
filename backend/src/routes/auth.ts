@@ -4,6 +4,7 @@ import { authenticateToken } from "../middleware/auth";
 import { validate, authSchemas } from "../middleware/validation";
 import logger from "../config/logger";
 import { successResponse, errorResponse } from "../utils/response";
+import { UserExistsError } from "../utils/errors";
 
 const router = Router();
 
@@ -43,10 +44,14 @@ router.post(
             });
 
             if (
-                error instanceof Error &&
-                error.message === "User with this email already exists"
+                error instanceof UserExistsError
             ) {
-                return res.status(409).json(errorResponse("User with this email already exists", "USER_EXISTS"));
+                return res.status(409).json(
+                    errorResponse(error.message, "USER_EXISTS", [{
+                        field: "email",
+                        message: error.message,
+                    }])
+                );
             }
 
             res.status(500).json(errorResponse("Registration failed", "REGISTRATION_ERROR"));

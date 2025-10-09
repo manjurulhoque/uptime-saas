@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import { Providers } from "@/components/providers/Providers";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
     title: "UptimeSaaS - Professional Website Monitoring",

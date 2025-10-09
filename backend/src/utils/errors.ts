@@ -68,3 +68,16 @@ export class MonitorNotFoundError extends AppError {
         super(message, 404, "MONITOR_NOT_FOUND");
     }
 }
+
+export class UserExistsError extends AppError {
+    constructor(message: string = "User already exists") {
+        super(message, 409, "USER_EXISTS");
+    }
+}
+
+export class UserNotFoundError extends AppError {
+    constructor(message: string = "User not found") {
+        super(message, 404, "USER_NOT_FOUND");
+    }
+}
+

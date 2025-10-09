@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "../db";
 import logger from "../config/logger";
+import { UserExistsError, UserNotFoundError } from "../utils/errors";
 
 interface RegisterData {
     first_name: string;
@@ -67,7 +68,7 @@ class AuthService {
                 logger.warn("Registration attempt with existing email", {
                     email: data.email,
                 });
-                throw new Error("User with this email already exists");
+                throw new UserExistsError("User with this email already exists");
             }
 
             // Hash password
@@ -134,7 +135,7 @@ class AuthService {
                 logger.warn("Login attempt with non-existent email", {
                     email: data.email,
                 });
-                throw new Error("Invalid credentials");
+                throw new UserNotFoundError("Invalid credentials");
             }
 
             // Verify password

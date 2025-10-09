@@ -3,37 +3,101 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import CenterLoader from "../loaders/center-loader";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useLoginMutation } from "@/store/api/authApi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+
+const loginSchema = z.object({
+    email: z.email("Invalid email address"),
+    password: z.string(),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
     const [isClient, setIsClient] = useState(false);
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
+    const [showPassword, setShowPassword] = useState(false);
+    const [login, { isLoading, error: loginError }] = useLoginMutation();
+    const router = useRouter();
+    const { isAuthenticated, session } = useAuth();
+    console.log(session);
+    console.log(isAuthenticated);
+
+    // Initialize react-hook-form
+    const {
+        register: registerField,
+        handleSubmit,
+        setError,
+        formState: { errors, isValid },
+        clearErrors,
+    } = useForm<LoginFormData>({
+        resolver: zodResolver(loginSchema),
+        mode: "onChange",
     });
-    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
     }, []);
 
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.push("/");
+        }
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        if (loginError && "data" in loginError) {
+            const errorData = loginError.data as any;
+
+            // Handle server validation errors
+            if (
+                errorData?.errors &&
+                Array.isArray(errorData.errors)
+            ) {
+                errorData.errors.forEach(
+                    (serverError: { field: string; message: string }) => {
+                        // Map server field names to form field names if needed
+                        const fieldName = serverError.field as keyof LoginFormData;
+                        setError(fieldName, {
+                            type: "server",
+                            message: serverError.message,
+                        });
+                    }
+                );
+            } else {
+                // Handle general errors
+                toast.error(errorData?.error || "Login failed. Please try again.");
+            }
+        }
+    }, [loginError, setError]);
+
+    const onSubmit = async (data: LoginFormData) => {
+        try {
+            // Clear previous errors
+            clearErrors();
+
+            const result = await login(data);
+
+            if (result.error) {
+                // handle error
+            } else {
+                toast.success("Login successful");
+                // router.push("/");
+            }
+        } catch (error) {
+            // console.error("Login failed:", error);
+            // toast.error("Login failed");
+        }
+    };
+
     if (!isClient) {
         return <CenterLoader />;
     }
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        // TODO: Implement login logic
-        console.log("Login attempt:", formData);
-        setTimeout(() => setIsLoading(false), 2000);
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData((prev) => ({
-            ...prev,
-            [e.target.name]: e.target.value,
-        }));
-    };
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-20">
@@ -50,7 +114,10 @@ const LoginPage = () => {
 
                 {/* Login Form */}
                 <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                    <form className="space-y-6" onSubmit={handleSubmit}>
+                    <form
+                        className="space-y-6"
+                        onSubmit={handleSubmit(onSubmit)}
+                    >
                         <div>
                             <label
                                 htmlFor="email"
@@ -60,15 +127,21 @@ const LoginPage = () => {
                             </label>
                             <input
                                 id="email"
-                                name="email"
                                 type="email"
                                 autoComplete="email"
-                                required
-                                value={formData.email}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                {...registerField("email")}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                    errors.email
+                                        ? "border-red-300"
+                                        : "border-gray-300"
+                                }`}
                                 placeholder="Enter your email"
                             />
+                            {errors.email && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.email.message}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -78,17 +151,38 @@ const LoginPage = () => {
                             >
                                 Password
                             </label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                required
-                                value={formData.password}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                placeholder="Enter your password"
-                            />
+                            <div className="relative">
+                                <input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    autoComplete="current-password"
+                                    {...registerField("password")}
+                                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                        errors.password
+                                            ? "border-red-300"
+                                            : "border-gray-300"
+                                    }`}
+                                    placeholder="Enter your password"
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                                    onClick={() =>
+                                        setShowPassword(!showPassword)
+                                    }
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                                    ) : (
+                                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                                    )}
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.password.message}
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-between">
@@ -119,7 +213,7 @@ const LoginPage = () => {
 
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || !isValid}
                             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                         >
                             {isLoading ? (

@@ -3,7 +3,7 @@ import "@/app/globals.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Providers } from "@/components/providers/Providers";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
     title: "UptimeSaaS - Authentication",
@@ -18,6 +18,7 @@ export default function AuthLayout({
     return (
         <html lang="en">
             <body>
+                <Toaster />
                 <Providers>
                     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
                         {/* Header */}
@@ -53,7 +54,6 @@ export default function AuthLayout({
                         <main className="relative">{children}</main>
                     </div>
                 </Providers>
-                <Toaster />
             </body>
         </html>
     );

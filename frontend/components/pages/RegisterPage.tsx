@@ -65,10 +65,10 @@ const RegisterPage = () => {
 
             // Handle server validation errors
             if (
-                errorData?.data?.errors &&
-                Array.isArray(errorData.data.errors)
+                errorData?.errors &&
+                Array.isArray(errorData.errors)
             ) {
-                errorData.data.errors.forEach(
+                errorData.errors.forEach(
                     (error: { field: string; message: string }) => {
                         // Map server field names to form field names if needed
                         const fieldName = error.field as keyof RegisterFormData;
@@ -80,7 +80,7 @@ const RegisterPage = () => {
                 );
             } else {
                 // Handle general errors
-                toast.error(errorData?.data?.error || "Registration failed");
+                toast.error(errorData?.error || "Registration failed. Please try again.");
             }
         }
     }, [registerError, setError]);
@@ -92,9 +92,7 @@ const RegisterPage = () => {
 
             // Prepare data for API - remove confirm_password and agreeToTerms
             const { agreeToTerms, ...registerData } = data;
-
             const result = await register(registerData);
-            console.log(result);
 
             if (result.error) {
                 // Error handling is done in useEffect above
