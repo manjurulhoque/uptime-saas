@@ -24,7 +24,7 @@ export function useAuth() {
             }
 
             if (result?.ok) {
-                router.push("/dashboard");
+                router.push("/");
                 router.refresh();
             }
         } catch (error) {

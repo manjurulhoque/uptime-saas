@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9900/api/";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9900/api";
 
 export const ACCESS_TOKEN_KEY = "uptime_saas_access_token";
 export const REFRESH_TOKEN_KEY = "uptime_saas_refresh_token";

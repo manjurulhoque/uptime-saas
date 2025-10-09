@@ -6,7 +6,6 @@ import CenterLoader from "../loaders/center-loader";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLoginMutation } from "@/store/api/authApi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
@@ -22,11 +21,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginPage = () => {
     const [isClient, setIsClient] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [login, { isLoading, error: loginError }] = useLoginMutation();
     const router = useRouter();
-    const { isAuthenticated, session } = useAuth();
-    console.log(session);
-    console.log(isAuthenticated);
+    const { isAuthenticated, isActionLoading, login } = useAuth();
 
     // Initialize react-hook-form
     const {
@@ -50,48 +46,15 @@ const LoginPage = () => {
         }
     }, [isAuthenticated]);
 
-    useEffect(() => {
-        if (loginError && "data" in loginError) {
-            const errorData = loginError.data as any;
-
-            // Handle server validation errors
-            if (
-                errorData?.errors &&
-                Array.isArray(errorData.errors)
-            ) {
-                errorData.errors.forEach(
-                    (serverError: { field: string; message: string }) => {
-                        // Map server field names to form field names if needed
-                        const fieldName = serverError.field as keyof LoginFormData;
-                        setError(fieldName, {
-                            type: "server",
-                            message: serverError.message,
-                        });
-                    }
-                );
-            } else {
-                // Handle general errors
-                toast.error(errorData?.error || "Login failed. Please try again.");
-            }
-        }
-    }, [loginError, setError]);
-
     const onSubmit = async (data: LoginFormData) => {
         try {
             // Clear previous errors
             clearErrors();
 
-            const result = await login(data);
-
-            if (result.error) {
-                // handle error
-            } else {
-                toast.success("Login successful");
-                // router.push("/");
-            }
+            await login(data);
         } catch (error) {
-            // console.error("Login failed:", error);
-            // toast.error("Login failed");
+            console.error("Login failed:", error);
+            toast.error("Login failed. Please try again.");
         }
     };
 
@@ -213,10 +176,10 @@ const LoginPage = () => {
 
                         <button
                             type="submit"
-                            disabled={isLoading || !isValid}
+                            disabled={isActionLoading || !isValid}
                             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                         >
-                            {isLoading ? (
+                            {isActionLoading ? (
                                 <div className="flex items-center">
                                     <svg
                                         className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
