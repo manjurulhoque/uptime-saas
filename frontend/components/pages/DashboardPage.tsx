@@ -136,13 +136,13 @@ export default function DashboardPage() {
     const getStatusIcon = (status: string | null) => {
         switch (status) {
             case "UP":
-                return <CheckCircle className="h-4 w-4 text-green-600" />;
+                return <CheckCircle className="h-4 w-4 text-ship-cove-600" />;
             case "DOWN":
                 return <AlertTriangle className="h-4 w-4 text-red-600" />;
             case "TIMEOUT":
-                return <Clock className="h-4 w-4 text-yellow-600" />;
+                return <Clock className="h-4 w-4 text-ship-cove-500" />;
             case "ERROR":
-                return <AlertTriangle className="h-4 w-4 text-gray-600" />;
+                return <AlertTriangle className="h-4 w-4 text-ship-cove-700" />;
             default:
                 return <Activity className="h-4 w-4 text-gray-400" />;
         }

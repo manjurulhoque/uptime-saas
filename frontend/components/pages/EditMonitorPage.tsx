@@ -379,7 +379,7 @@ export default function EditMonitorPage() {
                                                 <span className="text-gray-600">
                                                     Status:
                                                 </span>
-                                                <span className="font-medium text-green-600">
+                                                <span className="font-medium text-ship-cove-600">
                                                     {monitor.is_active
                                                         ? "Active"
                                                         : "Paused"}

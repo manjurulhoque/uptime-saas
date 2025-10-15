@@ -3,7 +3,7 @@ import Nav from "@/components/layout/Nav";
 
 export default function Home() {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="min-h-screen bg-gradient-to-br from-ship-cove-50 via-white to-ship-cove-100">
             {/* Navigation */}
             <Nav />
 
@@ -13,7 +13,7 @@ export default function Home() {
                     <div className="text-center">
                         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
                             Monitor Your Websites
-                            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-ship-cove-600 to-ship-cove-700">
                                 Like a Pro
                             </span>
                         </h1>
@@ -25,7 +25,7 @@ export default function Home() {
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link
                                 href="/register"
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                                className="bg-gradient-to-r from-ship-cove-600 to-ship-cove-700 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:from-ship-cove-700 hover:to-ship-cove-800 transition-all duration-200 shadow-lg hover:shadow-xl"
                             >
                                 Start Free Trial
                             </Link>
@@ -71,7 +71,7 @@ export default function Home() {
                                     width="120"
                                     height="20"
                                     rx="4"
-                                    fill="#3B82F6"
+                                    fill="#5e72b2"
                                 />
                                 <rect
                                     x="230"
@@ -236,7 +236,7 @@ export default function Home() {
                                     cx="620"
                                     cy="180"
                                     r="6"
-                                    fill="#3B82F6"
+                                    fill="#5e72b2"
                                 />
                                 <text
                                     x="640"
@@ -251,7 +251,7 @@ export default function Home() {
                                     x="620"
                                     y="205"
                                     fontSize="24"
-                                    fill="#3B82F6"
+                                    fill="#5e72b2"
                                     fontWeight="bold"
                                 >
                                     12
@@ -280,7 +280,7 @@ export default function Home() {
                                 {/* Chart lines */}
                                 <path
                                     d="M110 320 L150 300 L190 310 L230 290 L270 295 L310 280 L350 285 L390 270 L430 275 L470 260 L510 265 L550 250 L590 255 L630 240 L670 245 L710 230"
-                                    stroke="#3B82F6"
+                                    stroke="#5e72b2"
                                     strokeWidth="3"
                                     fill="none"
                                 />
@@ -296,7 +296,7 @@ export default function Home() {
                                     cx="100"
                                     cy="50"
                                     r="4"
-                                    fill="#3B82F6"
+                                    fill="#5e72b2"
                                     opacity="0.6"
                                 />
                                 <circle
@@ -350,7 +350,7 @@ export default function Home() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {/* Feature 1 */}
                             <div className="text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-200">
-                                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <div className="w-16 h-16 bg-gradient-to-r from-ship-cove-500 to-ship-cove-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                                     <svg
                                         className="w-8 h-8 text-white"
                                         fill="none"
@@ -480,7 +480,7 @@ export default function Home() {
 
                             {/* Feature 6 */}
                             <div className="text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-200">
-                                <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <div className="w-16 h-16 bg-gradient-to-r from-ship-cove-400 to-ship-cove-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                                     <svg
                                         className="w-8 h-8 text-white"
                                         fill="none"
@@ -514,23 +514,23 @@ export default function Home() {
                 </div>
 
                 {/* CTA Section */}
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 py-20">
+                <div className="bg-gradient-to-r from-ship-cove-600 to-ship-cove-700 py-20">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                         <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
                             Ready to get started?
                         </h2>
-                        <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+                        <p className="text-xl text-ship-cove-100 mb-8 max-w-2xl mx-auto">
                             Join thousands of businesses who trust UptimeSaaS to
                             monitor their websites and applications.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link
                                 href="/register"
-                                className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl"
+                                className="bg-white text-ship-cove-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl"
                             >
                                 Start Free Trial
                             </Link>
-                            <button className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-blue-600 transition-all duration-200">
+                            <button className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-ship-cove-600 transition-all duration-200">
                                 Contact Sales
                             </button>
                         </div>
@@ -544,7 +544,7 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                         <div>
                             <div className="flex items-center space-x-2 mb-4">
-                                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                                <div className="w-8 h-8 bg-gradient-to-r from-ship-cove-600 to-ship-cove-700 rounded-lg flex items-center justify-center">
                                     <svg
                                         className="w-5 h-5 text-white"
                                         fill="currentColor"

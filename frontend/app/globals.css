@@ -6,139 +6,97 @@
 
 @layer base {
   :root {
+    /* Ship Cove Color Palette - Light Theme */
+    --background: 220 25% 98%; /* ship-cove-50 */
+    --foreground: 220 25% 20%; /* ship-cove-900 */
 
-    --background: 0 0% 100%;
+    --card: 220 25% 100%; /* white */
+    --card-foreground: 220 25% 20%; /* ship-cove-900 */
 
-    --foreground: 0 0% 3.9%;
+    --popover: 220 25% 100%; /* white */
+    --popover-foreground: 220 25% 20%; /* ship-cove-900 */
 
-    --card: 0 0% 100%;
+    --primary: 220 35% 55%; /* ship-cove-600 */
+    --primary-foreground: 220 25% 98%; /* ship-cove-50 */
 
-    --card-foreground: 0 0% 3.9%;
+    --secondary: 220 25% 95%; /* ship-cove-100 */
+    --secondary-foreground: 220 25% 20%; /* ship-cove-900 */
 
-    --popover: 0 0% 100%;
+    --muted: 220 25% 95%; /* ship-cove-100 */
+    --muted-foreground: 220 15% 45%; /* ship-cove-700 */
 
-    --popover-foreground: 0 0% 3.9%;
+    --accent: 220 25% 95%; /* ship-cove-100 */
+    --accent-foreground: 220 25% 20%; /* ship-cove-900 */
 
-    --primary: 0 0% 9%;
-
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 0 0% 96.1%;
-
-    --secondary-foreground: 0 0% 9%;
-
-    --muted: 0 0% 96.1%;
-
-    --muted-foreground: 0 0% 45.1%;
-
-    --accent: 0 0% 96.1%;
-
-    --accent-foreground: 0 0% 9%;
-
-    --destructive: 0 84.2% 60.2%;
-
+    --destructive: 0 84.2% 60.2%; /* keep red for errors */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 89.8%;
+    --border: 220 25% 90%; /* ship-cove-200 */
+    --input: 220 25% 90%; /* ship-cove-200 */
+    --ring: 220 35% 55%; /* ship-cove-600 */
 
-    --input: 0 0% 89.8%;
+    --chart-1: 220 35% 55%; /* ship-cove-600 */
+    --chart-2: 220 30% 65%; /* ship-cove-500 */
+    --chart-3: 220 25% 75%; /* ship-cove-400 */
+    --chart-4: 220 20% 85%; /* ship-cove-300 */
+    --chart-5: 220 15% 90%; /* ship-cove-200 */
 
-    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
 
-    --chart-1: 12 76% 61%;
-
-    --chart-2: 173 58% 39%;
-
-    --chart-3: 197 37% 24%;
-
-    --chart-4: 43 74% 66%;
-
-    --chart-5: 27 87% 67%;
-
-    --radius: 0.5rem
-  ;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-background: 220 25% 98%; /* ship-cove-50 */
+    --sidebar-foreground: 220 25% 20%; /* ship-cove-900 */
+    --sidebar-primary: 220 35% 55%; /* ship-cove-600 */
+    --sidebar-primary-foreground: 220 25% 98%; /* ship-cove-50 */
+    --sidebar-accent: 220 25% 95%; /* ship-cove-100 */
+    --sidebar-accent-foreground: 220 25% 20%; /* ship-cove-900 */
+    --sidebar-border: 220 25% 90%; /* ship-cove-200 */
+    --sidebar-ring: 220 35% 55%; /* ship-cove-600 */
+  }
   .dark {
+    /* Ship Cove Color Palette - Dark Theme */
+    --background: 220 25% 8%; /* ship-cove-950 */
+    --foreground: 220 25% 95%; /* ship-cove-50 */
 
-    --background: 0 0% 3.9%;
+    --card: 220 25% 10%; /* ship-cove-900 */
+    --card-foreground: 220 25% 95%; /* ship-cove-50 */
 
-    --foreground: 0 0% 98%;
+    --popover: 220 25% 10%; /* ship-cove-900 */
+    --popover-foreground: 220 25% 95%; /* ship-cove-50 */
 
-    --card: 0 0% 3.9%;
+    --primary: 220 35% 65%; /* ship-cove-500 */
+    --primary-foreground: 220 25% 8%; /* ship-cove-950 */
 
-    --card-foreground: 0 0% 98%;
+    --secondary: 220 25% 15%; /* ship-cove-900 */
+    --secondary-foreground: 220 25% 95%; /* ship-cove-50 */
 
-    --popover: 0 0% 3.9%;
+    --muted: 220 25% 15%; /* ship-cove-900 */
+    --muted-foreground: 220 15% 65%; /* ship-cove-400 */
 
-    --popover-foreground: 0 0% 98%;
+    --accent: 220 25% 15%; /* ship-cove-900 */
+    --accent-foreground: 220 25% 95%; /* ship-cove-50 */
 
-    --primary: 0 0% 98%;
-
-    --primary-foreground: 0 0% 9%;
-
-    --secondary: 0 0% 14.9%;
-
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 14.9%;
-
-    --muted-foreground: 0 0% 63.9%;
-
-    --accent: 0 0% 14.9%;
-
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-
+    --destructive: 0 62.8% 30.6%; /* keep red for errors */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 14.9%;
+    --border: 220 25% 20%; /* ship-cove-800 */
+    --input: 220 25% 20%; /* ship-cove-800 */
+    --ring: 220 35% 65%; /* ship-cove-500 */
 
-    --input: 0 0% 14.9%;
+    --chart-1: 220 35% 65%; /* ship-cove-500 */
+    --chart-2: 220 30% 70%; /* ship-cove-400 */
+    --chart-3: 220 25% 75%; /* ship-cove-300 */
+    --chart-4: 220 20% 80%; /* ship-cove-200 */
+    --chart-5: 220 15% 85%; /* ship-cove-100 */
 
-    --ring: 0 0% 83.1%;
-
-    --chart-1: 220 70% 50%;
-
-    --chart-2: 160 60% 45%;
-
-    --chart-3: 30 80% 55%;
-
-    --chart-4: 280 65% 60%;
-
-    --chart-5: 340 75% 55%
-  ;
-
-    --sidebar-background: 240 5.9% 10%;
-
-    --sidebar-foreground: 240 4.8% 95.9%;
-
-    --sidebar-primary: 224.3 76.3% 48%;
-
-    --sidebar-primary-foreground: 0 0% 100%;
-
-    --sidebar-accent: 240 3.7% 15.9%;
-
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-
-    --sidebar-border: 240 3.7% 15.9%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-background: 220 25% 8%; /* ship-cove-950 */
+    --sidebar-foreground: 220 25% 95%; /* ship-cove-50 */
+    --sidebar-primary: 220 35% 65%; /* ship-cove-500 */
+    --sidebar-primary-foreground: 220 25% 8%; /* ship-cove-950 */
+    --sidebar-accent: 220 25% 15%; /* ship-cove-900 */
+    --sidebar-accent-foreground: 220 25% 95%; /* ship-cove-50 */
+    --sidebar-border: 220 25% 20%; /* ship-cove-800 */
+    --sidebar-ring: 220 35% 65%; /* ship-cove-500 */
+  }
 }
 
 

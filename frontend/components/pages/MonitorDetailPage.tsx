@@ -254,13 +254,13 @@ export default function MonitorDetailPage() {
                                     ) : stats ? (
                                         <div className="space-y-4">
                                             <div className="text-center">
-                                                <div className="text-3xl font-bold text-green-600">
+                                                <div className="text-3xl font-bold text-ship-cove-600">
                                                     {stats.uptimePercentage.toFixed(
                                                         2
                                                     )}
                                                     %
                                                 </div>
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-sm text-ship-cove-700">
                                                     Uptime (30 days)
                                                 </p>
                                             </div>
@@ -328,10 +328,10 @@ export default function MonitorDetailPage() {
                                         <CardTitle className="text-sm font-medium">
                                             Successful Checks
                                         </CardTitle>
-                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                        <CheckCircle className="h-4 w-4 text-ship-cove-600" />
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="text-2xl font-bold text-green-600">
+                                        <div className="text-2xl font-bold text-ship-cove-600">
                                             {stats.upChecks}
                                         </div>
                                         <p className="text-xs text-muted-foreground">

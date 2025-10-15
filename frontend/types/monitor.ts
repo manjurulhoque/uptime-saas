@@ -110,13 +110,13 @@ export interface DemoMonitor extends Monitor {
     stats?: MonitorStats;
 }
 
-// Status colors and labels
+// Status colors and labels using Ship Cove palette
 export const MONITOR_STATUS = {
     UP: {
         label: "Up",
-        color: "green",
-        bgColor: "bg-green-100",
-        textColor: "text-green-800",
+        color: "ship-cove",
+        bgColor: "bg-ship-cove-100",
+        textColor: "text-ship-cove-800",
     },
     DOWN: {
         label: "Down",
@@ -126,15 +126,15 @@ export const MONITOR_STATUS = {
     },
     TIMEOUT: {
         label: "Timeout",
-        color: "yellow",
-        bgColor: "bg-yellow-100",
-        textColor: "text-yellow-800",
+        color: "ship-cove",
+        bgColor: "bg-ship-cove-200",
+        textColor: "text-ship-cove-800",
     },
     ERROR: {
         label: "Error",
-        color: "gray",
-        bgColor: "bg-gray-100",
-        textColor: "text-gray-800",
+        color: "ship-cove",
+        bgColor: "bg-ship-cove-300",
+        textColor: "text-ship-cove-900",
     },
 } as const;
 
