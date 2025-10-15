@@ -1,10 +1,8 @@
 "use client";
 
-import { useAuth } from "@/hooks/use-auth";
-import Link from "next/link";
+import UserNav from "./UserNav";
 
 const Nav = () => {
-    const { isAuthenticated } = useAuth();
     return (
         <nav className="relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,27 +26,7 @@ const Nav = () => {
                         </span>
                     </div>
                     <div className="flex items-center space-x-4">
-                        {isAuthenticated ? (
-                            <Link
-                                href="/dashboard"
-                                className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                            >
-                                Dashboard
-                            </Link>
-                        ) : (
-                            <Link
-                                href="/login"
-                                className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                            >
-                                Sign in
-                            </Link>
-                        )}
-                        <Link
-                            href="/register"
-                            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
-                        >
-                            Get Started
-                        </Link>
+                        <UserNav />
                     </div>
                 </div>
             </div>
