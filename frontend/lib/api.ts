@@ -1,7 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9900/api";
+export const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:9900/api";
 
 export const ACCESS_TOKEN_KEY = "uptime_saas_access_token";
 export const REFRESH_TOKEN_KEY = "uptime_saas_refresh_token";
@@ -54,6 +55,10 @@ export const api = createApi({
         "FileCollaborators",
         "FolderCollaborators",
         "Collaborators",
+        "Monitor",
+        "MonitorStats",
+        "MonitorChecks",
+        "MonitorIncidents",
     ],
     endpoints: () => ({}),
 });
@@ -67,5 +72,13 @@ export const API_ENDPOINTS = {
         LOGIN: "auth/login/",
         REGISTER: "auth/register/",
         REFRESH: "auth/refresh/",
+    },
+    MONITORS: {
+        BASE: "monitors",
+        BY_ID: (id: number) => `monitors/${id}`,
+        STATUS: (id: number) => `monitors/${id}/status`,
+        STATS: (id: number) => `monitors/${id}/stats`,
+        CHECKS: (id: number) => `monitors/${id}/checks`,
+        INCIDENTS: (id: number) => `monitors/${id}/incidents`,
     },
 } as const;

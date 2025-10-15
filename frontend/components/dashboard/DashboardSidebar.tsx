@@ -23,6 +23,8 @@ import {
     Shield,
     LogOut,
     ChevronDown,
+    Globe,
+    Activity,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -39,6 +41,11 @@ const menuItems = [
         title: "Overview",
         url: "/dashboard",
         icon: BarChart3,
+    },
+    {
+        title: "Monitors",
+        url: "/dashboard/monitors",
+        icon: Globe,
     },
 ];
 
@@ -64,7 +71,12 @@ export function DashboardSidebar() {
     const pathname = usePathname();
     const { session, logout } = useAuth();
 
-    const isActive = (path: string) => pathname === path;
+    const isActive = (path: string) => {
+        if (path === "/dashboard") {
+            return pathname === path;
+        }
+        return pathname.startsWith(path);
+    };
 
     const handleLogout = async () => {
         try {
