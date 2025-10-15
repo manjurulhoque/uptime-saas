@@ -8,6 +8,12 @@ import { ApiResponse } from "@/types/response";
 
 async function refreshAccessToken(token: JWT) {
     try {
+        if (!token.refreshToken) {
+            return {
+                error: "RefreshAccessTokenError",
+            };
+        }
+
         const response = await fetch(
             `${API_BASE_URL}/${API_ENDPOINTS.AUTH.REFRESH}`,
             {
