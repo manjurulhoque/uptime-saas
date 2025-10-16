@@ -147,7 +147,17 @@ router.get("/:id", authenticateToken, async (req: Request, res: Response) => {
 // update monitor
 router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
     try {
-        const { url, interval, isActive } = req.body;
+        const { 
+            url, 
+            interval, 
+            isActive,
+            alert_enabled, 
+            alert_email, 
+            alert_on_down, 
+            alert_on_up, 
+            alert_on_slow, 
+            slow_threshold 
+        } = req.body;
 
         const existingMonitor = await prisma.monitor.findFirst({
             where: {
@@ -172,9 +182,22 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
             }
         }
 
+        const updateData: any = { url, interval };
+        
+        // Add is_active if provided
+        if (isActive !== undefined) updateData.is_active = isActive;
+        
+        // Add alert settings if provided
+        if (alert_enabled !== undefined) updateData.alert_enabled = alert_enabled;
+        if (alert_email !== undefined) updateData.alert_email = alert_email;
+        if (alert_on_down !== undefined) updateData.alert_on_down = alert_on_down;
+        if (alert_on_up !== undefined) updateData.alert_on_up = alert_on_up;
+        if (alert_on_slow !== undefined) updateData.alert_on_slow = alert_on_slow;
+        if (slow_threshold !== undefined) updateData.slow_threshold = slow_threshold;
+
         const monitor = await prisma.monitor.update({
             where: { id: parseInt(req.params.id), user_id: req.user?.id },
-            data: { url, interval, is_active: isActive },
+            data: updateData,
         });
 
         // Update monitoring job if interval changed
@@ -184,6 +207,7 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
             monitorId: monitor.id,
             userId: req.user?.id,
             url: monitor.url,
+            alertEnabled: monitor.alert_enabled,
             ip: req.ip,
             userAgent: req.get("User-Agent"),
         });
@@ -198,6 +222,13 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
         });
 
         if (error instanceof MonitorNotFoundError) {
+            return res.status(error.statusCode).json({
+                error: error.message,
+                code: error.code,
+            });
+        }
+
+        if (error instanceof MonitorExistsError) {
             return res.status(error.statusCode).json({
                 error: error.message,
                 code: error.code,
@@ -241,6 +272,88 @@ router.put("/:id/status", authenticateToken, async (req: Request, res: Response)
         res.status(200).json({ data: { monitor } });
     } catch (error) {
         logger.error("Update monitor status endpoint error", {
+            error: error instanceof Error ? error.message : "Unknown error",
+            userId: req.user?.id,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+        });
+
+        res.status(500).json({
+            error: "Internal server error",
+            code: "INTERNAL_SERVER_ERROR",
+        });
+    }
+});
+
+// update monitor alert settings
+router.put("/:id/alerts", authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const { 
+            alert_enabled, 
+            alert_email, 
+            alert_on_down, 
+            alert_on_up, 
+            alert_on_slow, 
+            slow_threshold 
+        } = req.body;
+
+        const monitor = await prisma.monitor.update({
+            where: { id: parseInt(req.params.id), user_id: req.user?.id },
+            data: {
+                alert_enabled,
+                alert_email,
+                alert_on_down,
+                alert_on_up,
+                alert_on_slow,
+                slow_threshold,
+            },
+        });
+
+        logger.info("Monitor alert settings updated successfully", {
+            monitorId: monitor.id,
+            userId: req.user?.id,
+            alertEnabled: monitor.alert_enabled,
+            alertEmail: monitor.alert_email,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+        });
+        
+        res.status(200).json({ data: { monitor } });
+    } catch (error) {
+        logger.error("Update monitor alerts endpoint error", {
+            error: error instanceof Error ? error.message : "Unknown error",
+            userId: req.user?.id,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+        });
+
+        res.status(500).json({
+            error: "Internal server error",
+            code: "INTERNAL_SERVER_ERROR",
+        });
+    }
+});
+
+// get monitor notifications
+router.get("/:id/notifications", authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const { limit = 50, offset = 0 } = req.query;
+        
+        const notifications = await prisma.notification.findMany({
+            where: {
+                monitor_id: parseInt(req.params.id),
+                monitor: {
+                    user_id: req.user?.id,
+                },
+            },
+            orderBy: { created_at: "desc" },
+            take: parseInt(limit as string),
+            skip: parseInt(offset as string),
+        });
+
+        res.status(200).json({ data: { notifications } });
+    } catch (error) {
+        logger.error("Get monitor notifications endpoint error", {
             error: error instanceof Error ? error.message : "Unknown error",
             userId: req.user?.id,
             ip: req.ip,

@@ -9,6 +9,14 @@ export interface Monitor {
     user_id: number;
     created_at: string; // ISO date string
     updated_at: string; // ISO date string
+
+    // Alert settings
+    alert_enabled: boolean;
+    alert_email: string | null;
+    alert_on_down: boolean;
+    alert_on_up: boolean;
+    alert_on_slow: boolean;
+    slow_threshold: number | null;
 }
 
 export interface MonitorCheck {
@@ -51,10 +59,39 @@ export interface CreateMonitorRequest {
 export interface UpdateMonitorRequest {
     url?: string;
     interval?: number;
+    isActive?: boolean;
+    alert_enabled?: boolean;
+    alert_email?: string;
+    alert_on_down?: boolean;
+    alert_on_up?: boolean;
+    alert_on_slow?: boolean;
+    slow_threshold?: number;
 }
 
 export interface UpdateMonitorStatusRequest {
     isActive: boolean;
+}
+
+export interface UpdateMonitorAlertsRequest {
+    alert_enabled: boolean;
+    alert_email?: string;
+    alert_on_down: boolean;
+    alert_on_up: boolean;
+    alert_on_slow: boolean;
+    slow_threshold?: number;
+}
+
+export interface Notification {
+    id: number;
+    monitor_id: number;
+    type: "DOWN" | "UP" | "SLOW" | "RESOLVED";
+    status: "PENDING" | "SENT" | "FAILED";
+    email: string;
+    subject: string;
+    message: string;
+    sent_at: string | null;
+    error_message: string | null;
+    created_at: string;
 }
 
 export interface MonitorResponse {
@@ -94,6 +131,14 @@ export interface MonitorStatsResponse {
     message: string;
     data: {
         stats: MonitorStats;
+    };
+}
+
+export interface NotificationsResponse {
+    success: boolean;
+    message: string;
+    data: {
+        notifications: Notification[];
     };
 }
 

@@ -6,9 +6,11 @@ import type {
     CreateMonitorRequest,
     UpdateMonitorRequest,
     UpdateMonitorStatusRequest,
+    UpdateMonitorAlertsRequest,
     MonitorChecksResponse,
     MonitorIncidentsResponse,
     MonitorStatsResponse,
+    NotificationsResponse,
     MonitorQueryParams,
 } from "@/types/monitor";
 
@@ -72,6 +74,35 @@ export const monitorApi = api.injectEndpoints({
                 { type: "Monitor", id },
                 "Monitor",
             ],
+        }),
+
+        // Update monitor alert settings
+        updateMonitorAlerts: builder.mutation<
+            MonitorResponse,
+            { id: number; data: UpdateMonitorAlertsRequest }
+        >({
+            query: ({ id, data }) => ({
+                url: `monitors/${id}/alerts`,
+                method: "PUT",
+                body: data,
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: "Monitor", id },
+                "Monitor",
+            ],
+        }),
+
+        // Get monitor notifications
+        getMonitorNotifications: builder.query<
+            NotificationsResponse,
+            { id: number; params?: { limit?: number; offset?: number } }
+        >({
+            query: ({ id, params = {} }) => ({
+                url: `monitors/${id}/notifications`,
+                method: "GET",
+                params,
+            }),
+            providesTags: (result, error, { id }) => [{ type: "Monitor", id }],
         }),
 
         // Delete a monitor
@@ -140,6 +171,8 @@ export const {
     useCreateMonitorMutation,
     useUpdateMonitorMutation,
     useUpdateMonitorStatusMutation,
+    useUpdateMonitorAlertsMutation,
+    useGetMonitorNotificationsQuery,
     useDeleteMonitorMutation,
     useGetMonitorStatsQuery,
     useGetMonitorChecksQuery,

@@ -20,6 +20,8 @@ import {
     AlertCircle,
     CheckCircle,
     Save,
+    Mail,
+    Bell,
 } from "lucide-react";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import {
@@ -51,6 +53,14 @@ export default function EditMonitorPage() {
     const [urlError, setUrlError] = useState("");
     const [isActive, setIsActive] = useState<boolean>(true);
 
+    // Alert settings state
+    const [alertEnabled, setAlertEnabled] = useState<boolean>(true);
+    const [alertEmail, setAlertEmail] = useState<string>("");
+    const [alertOnDown, setAlertOnDown] = useState<boolean>(true);
+    const [alertOnUp, setAlertOnUp] = useState<boolean>(false);
+    const [alertOnSlow, setAlertOnSlow] = useState<boolean>(false);
+    const [slowThreshold, setSlowThreshold] = useState<number>(5000);
+
     const { toast } = useToast();
     const router = useRouter();
     const [updateMonitor] = useUpdateMonitorMutation();
@@ -70,6 +80,14 @@ export default function EditMonitorPage() {
             setUrl(monitor.url);
             setInterval(monitor.interval);
             setIsActive(monitor.is_active);
+
+            // Initialize alert settings
+            setAlertEnabled(monitor.alert_enabled);
+            setAlertEmail(monitor.alert_email || "");
+            setAlertOnDown(monitor.alert_on_down);
+            setAlertOnUp(monitor.alert_on_up);
+            setAlertOnSlow(monitor.alert_on_slow);
+            setSlowThreshold(monitor.slow_threshold || 5000);
         }
     }, [monitor]);
 
@@ -116,19 +134,16 @@ export default function EditMonitorPage() {
                     data: {
                         url: url.trim(),
                         interval,
+                        isActive,
+                        alert_enabled: alertEnabled,
+                        alert_email: alertEmail || undefined,
+                        alert_on_down: alertOnDown,
+                        alert_on_up: alertOnUp,
+                        alert_on_slow: alertOnSlow,
+                        slow_threshold: alertOnSlow ? slowThreshold : undefined,
                     },
                 }).unwrap()
             );
-
-            // If status changed, update via status endpoint
-            if (monitor && isActive !== monitor.is_active) {
-                updatePromises.push(
-                    updateMonitorStatus({
-                        id: monitorId,
-                        data: { isActive },
-                    }).unwrap()
-                );
-            }
 
             await Promise.all(updatePromises);
 
@@ -392,6 +407,178 @@ export default function EditMonitorPage() {
                                 </CardContent>
                             </Card>
 
+                            {/* Alert Settings */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Bell className="h-5 w-5" />
+                                        Alert Settings
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    {/* Enable Alerts */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="alert-enabled">
+                                                Enable Email Alerts
+                                            </Label>
+                                            <p className="text-sm text-gray-600">
+                                                Send email notifications when
+                                                this monitor changes status.
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            id="alert-enabled"
+                                            checked={alertEnabled}
+                                            onCheckedChange={setAlertEnabled}
+                                        />
+                                    </div>
+
+                                    {alertEnabled && (
+                                        <>
+                                            {/* Alert Email */}
+                                            <div className="space-y-2">
+                                                <Label htmlFor="alert-email">
+                                                    Alert Email Address
+                                                </Label>
+                                                <Input
+                                                    id="alert-email"
+                                                    type="email"
+                                                    placeholder="alerts@example.com"
+                                                    value={alertEmail}
+                                                    onChange={(e) =>
+                                                        setAlertEmail(
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+                                                <p className="text-sm text-gray-600">
+                                                    Leave empty to use your
+                                                    account email address.
+                                                </p>
+                                            </div>
+
+                                            {/* Alert Types */}
+                                            <div className="space-y-4">
+                                                <Label>Alert Conditions</Label>
+
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-1">
+                                                            <Label htmlFor="alert-down">
+                                                                When Monitor
+                                                                Goes Down
+                                                            </Label>
+                                                            <p className="text-sm text-gray-600">
+                                                                Alert when the
+                                                                website becomes
+                                                                unreachable.
+                                                            </p>
+                                                        </div>
+                                                        <Switch
+                                                            id="alert-down"
+                                                            checked={
+                                                                alertOnDown
+                                                            }
+                                                            onCheckedChange={
+                                                                setAlertOnDown
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-1">
+                                                            <Label htmlFor="alert-up">
+                                                                When Monitor
+                                                                Comes Back Up
+                                                            </Label>
+                                                            <p className="text-sm text-gray-600">
+                                                                Alert when the
+                                                                website becomes
+                                                                available again.
+                                                            </p>
+                                                        </div>
+                                                        <Switch
+                                                            id="alert-up"
+                                                            checked={alertOnUp}
+                                                            onCheckedChange={
+                                                                setAlertOnUp
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="space-y-1">
+                                                                <Label htmlFor="alert-slow">
+                                                                    When
+                                                                    Response is
+                                                                    Slow
+                                                                </Label>
+                                                                <p className="text-sm text-gray-600">
+                                                                    Alert when
+                                                                    response
+                                                                    time exceeds
+                                                                    threshold.
+                                                                </p>
+                                                            </div>
+                                                            <Switch
+                                                                id="alert-slow"
+                                                                checked={
+                                                                    alertOnSlow
+                                                                }
+                                                                onCheckedChange={
+                                                                    setAlertOnSlow
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        {alertOnSlow && (
+                                                            <div className="space-y-2">
+                                                                <Label htmlFor="slow-threshold">
+                                                                    Slow
+                                                                    Response
+                                                                    Threshold
+                                                                    (milliseconds)
+                                                                </Label>
+                                                                <Input
+                                                                    id="slow-threshold"
+                                                                    type="number"
+                                                                    placeholder="5000"
+                                                                    value={
+                                                                        slowThreshold
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) =>
+                                                                        setSlowThreshold(
+                                                                            Number(
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                    min="1000"
+                                                                    max="30000"
+                                                                />
+                                                                <p className="text-sm text-gray-600">
+                                                                    Alert when
+                                                                    response
+                                                                    time exceeds
+                                                                    this value
+                                                                    (1000-30000ms).
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
+
                             {/* Summary */}
                             {url && validateUrl(url) && (
                                 <Card>
@@ -435,6 +622,58 @@ export default function EditMonitorPage() {
                                                         : "Paused"}
                                                 </span>
                                             </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">
+                                                    Email Alerts:
+                                                </span>
+                                                <span className="font-medium">
+                                                    {alertEnabled
+                                                        ? "Enabled"
+                                                        : "Disabled"}
+                                                </span>
+                                            </div>
+                                            {alertEnabled && (
+                                                <>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-600">
+                                                            Alert Email:
+                                                        </span>
+                                                        <span className="font-medium">
+                                                            {alertEmail ||
+                                                                "Account Email"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-600">
+                                                            Alert Types:
+                                                        </span>
+                                                        <span className="font-medium">
+                                                            {[
+                                                                alertOnDown &&
+                                                                    "Down",
+                                                                alertOnUp &&
+                                                                    "Up",
+                                                                alertOnSlow &&
+                                                                    "Slow",
+                                                            ]
+                                                                .filter(Boolean)
+                                                                .join(", ") ||
+                                                                "None"}
+                                                        </span>
+                                                    </div>
+                                                    {alertOnSlow && (
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">
+                                                                Slow Threshold:
+                                                            </span>
+                                                            <span className="font-medium">
+                                                                {slowThreshold}
+                                                                ms
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>

@@ -2,6 +2,7 @@ import axios, { AxiosResponse, AxiosError } from "axios";
 import * as cron from "node-cron";
 import prisma from "../db";
 import logger from "../config/logger";
+import emailService from "./emailService";
 
 interface CheckResult {
     status: "UP" | "DOWN" | "TIMEOUT" | "ERROR";
@@ -344,6 +345,11 @@ class MonitoringService {
                     },
                 });
 
+                // Send DOWN alert if enabled
+                if (monitor.alert_enabled && monitor.alert_on_down) {
+                    await this.sendAlert(monitorId, "DOWN", result);
+                }
+
                 logger.info(`Incident started for monitor ${monitorId}`, {
                     monitorId,
                     url: monitor.url,
@@ -366,12 +372,24 @@ class MonitoringService {
                     },
                 });
 
+                // Send UP alert if enabled
+                if (monitor.alert_enabled && monitor.alert_on_up) {
+                    await this.sendAlert(monitorId, "UP", result, duration);
+                }
+
                 logger.info(`Incident resolved for monitor ${monitorId}`, {
                     monitorId,
                     url: monitor.url,
                     incidentId: activeIncident.id,
                     duration,
                 });
+            }
+
+            // Check for slow response alerts
+            if (monitor.alert_enabled && monitor.alert_on_slow && 
+                result.status === "UP" && result.responseTime && 
+                monitor.slow_threshold && result.responseTime > monitor.slow_threshold) {
+                await this.sendAlert(monitorId, "SLOW", result);
             }
         } catch (error) {
             logger.error(
@@ -384,6 +402,37 @@ class MonitoringService {
                             : "Unknown error",
                 },
             );
+        }
+    }
+
+    private async sendAlert(
+        monitorId: number,
+        type: "DOWN" | "UP" | "SLOW" | "RESOLVED",
+        result: CheckResult,
+        incidentDuration?: number,
+    ): Promise<void> {
+        try {
+            const monitor = await prisma.monitor.findUnique({
+                where: { id: monitorId },
+            });
+
+            if (!monitor) return;
+
+            await emailService.sendNotification({
+                monitorId,
+                monitorUrl: monitor.url,
+                type,
+                status: result.status,
+                responseTime: result.responseTime,
+                errorMessage: result.errorMessage,
+                incidentDuration,
+            });
+        } catch (error) {
+            logger.error(`Failed to send alert for monitor ${monitorId}`, {
+                monitorId,
+                type,
+                error: error instanceof Error ? error.message : "Unknown error",
+            });
         }
     }
 
