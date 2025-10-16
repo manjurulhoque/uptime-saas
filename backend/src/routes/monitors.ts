@@ -147,7 +147,7 @@ router.get("/:id", authenticateToken, async (req: Request, res: Response) => {
 // update monitor
 router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
     try {
-        const { url, interval, } = req.body;
+        const { url, interval, isActive } = req.body;
 
         const existingMonitor = await prisma.monitor.findFirst({
             where: {
@@ -174,7 +174,7 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
 
         const monitor = await prisma.monitor.update({
             where: { id: parseInt(req.params.id), user_id: req.user?.id },
-            data: { url, interval },
+            data: { url, interval, is_active: isActive },
         });
 
         // Update monitoring job if interval changed

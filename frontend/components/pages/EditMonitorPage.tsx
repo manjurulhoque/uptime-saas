@@ -25,10 +25,12 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import {
     useGetMonitorQuery,
     useUpdateMonitorMutation,
+    useUpdateMonitorStatusMutation,
 } from "@/store/api/monitorApi";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
 
 const INTERVAL_OPTIONS = [
     { value: 1, label: "1 minute", description: "High frequency monitoring" },
@@ -47,10 +49,12 @@ export default function EditMonitorPage() {
     const [interval, setInterval] = useState<number>(5);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [urlError, setUrlError] = useState("");
+    const [isActive, setIsActive] = useState<boolean>(true);
 
     const { toast } = useToast();
     const router = useRouter();
     const [updateMonitor] = useUpdateMonitorMutation();
+    const [updateMonitorStatus] = useUpdateMonitorStatusMutation();
 
     const {
         data: monitorData,
@@ -65,6 +69,7 @@ export default function EditMonitorPage() {
         if (monitor) {
             setUrl(monitor.url);
             setInterval(monitor.interval);
+            setIsActive(monitor.is_active);
         }
     }, [monitor]);
 
@@ -102,13 +107,30 @@ export default function EditMonitorPage() {
         setIsSubmitting(true);
 
         try {
-            await updateMonitor({
-                id: monitorId,
-                data: {
-                    url: url.trim(),
-                    interval,
-                },
-            }).unwrap();
+            const updatePromises: Promise<any>[] = [];
+
+            // Always update url/interval via main endpoint
+            updatePromises.push(
+                updateMonitor({
+                    id: monitorId,
+                    data: {
+                        url: url.trim(),
+                        interval,
+                    },
+                }).unwrap()
+            );
+
+            // If status changed, update via status endpoint
+            if (monitor && isActive !== monitor.is_active) {
+                updatePromises.push(
+                    updateMonitorStatus({
+                        id: monitorId,
+                        data: { isActive },
+                    }).unwrap()
+                );
+            }
+
+            await Promise.all(updatePromises);
 
             toast({
                 title: "Monitor updated successfully",
@@ -342,6 +364,34 @@ export default function EditMonitorPage() {
                                 </CardContent>
                             </Card>
 
+                            {/* Active Status */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <CheckCircle className="h-5 w-5" />
+                                        Status
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="is-active">
+                                                Active
+                                            </Label>
+                                            <p className="text-sm text-gray-600">
+                                                Toggle to pause or resume
+                                                monitoring for this URL.
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            id="is-active"
+                                            checked={isActive}
+                                            onCheckedChange={setIsActive}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+
                             {/* Summary */}
                             {url && validateUrl(url) && (
                                 <Card>
@@ -380,7 +430,7 @@ export default function EditMonitorPage() {
                                                     Status:
                                                 </span>
                                                 <span className="font-medium text-ship-cove-600">
-                                                    {monitor.is_active
+                                                    {isActive
                                                         ? "Active"
                                                         : "Paused"}
                                                 </span>
