@@ -72,6 +72,8 @@ export const API_ENDPOINTS = {
         LOGIN: "auth/login/",
         REGISTER: "auth/register/",
         REFRESH: "auth/refresh/",
+        ME: "auth/me",
+        PROFILE: "auth/profile",
     },
     MONITORS: {
         BASE: "monitors",

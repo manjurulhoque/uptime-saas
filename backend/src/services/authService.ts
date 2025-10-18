@@ -48,15 +48,19 @@ class AuthService {
             expiresIn: this.accessTokenExpiry,
         });
 
-        const refreshToken = jwt.sign({ user_id: userId, email }, refreshSecret, {
-            expiresIn: this.refreshTokenExpiry,
-        });
+        const refreshToken = jwt.sign(
+            { user_id: userId, email },
+            refreshSecret,
+            {
+                expiresIn: this.refreshTokenExpiry,
+            },
+        );
 
         return { access_token: accessToken, refresh_token: refreshToken };
     }
 
     async register(
-        data: RegisterData
+        data: RegisterData,
     ): Promise<{ user: User; tokens: TokenPair }> {
         try {
             // Check if user already exists
@@ -68,13 +72,15 @@ class AuthService {
                 logger.warn("Registration attempt with existing email", {
                     email: data.email,
                 });
-                throw new UserExistsError("User with this email already exists");
+                throw new UserExistsError(
+                    "User with this email already exists",
+                );
             }
 
             // Hash password
             const passwordHash = await bcrypt.hash(
                 data.password,
-                this.saltRounds
+                this.saltRounds,
             );
 
             // Create user
@@ -141,7 +147,7 @@ class AuthService {
             // Verify password
             const isValidPassword = await bcrypt.compare(
                 data.password,
-                user.password_hash
+                user.password_hash,
             );
 
             if (!isValidPassword) {
@@ -192,7 +198,7 @@ class AuthService {
             // Verify refresh token
             const decoded = jwt.verify(
                 refreshToken,
-                refreshSecret
+                refreshSecret,
             ) as jwt.JwtPayload;
 
             // Check if user still exists
@@ -228,7 +234,7 @@ class AuthService {
     async changePassword(
         userId: number,
         currentPassword: string,
-        newPassword: string
+        newPassword: string,
     ): Promise<void> {
         try {
             // Get user with password hash
@@ -243,7 +249,7 @@ class AuthService {
             // Verify current password
             const isValidPassword = await bcrypt.compare(
                 currentPassword,
-                user.password_hash
+                user.password_hash,
             );
 
             if (!isValidPassword) {
@@ -251,7 +257,7 @@ class AuthService {
                     "Password change attempt with invalid current password",
                     {
                         user_id: userId,
-                    }
+                    },
                 );
                 throw new Error("Current password is incorrect");
             }
@@ -259,7 +265,7 @@ class AuthService {
             // Hash new password
             const newPasswordHash = await bcrypt.hash(
                 newPassword,
-                this.saltRounds
+                this.saltRounds,
             );
 
             // Update password
@@ -275,6 +281,72 @@ class AuthService {
             logger.error("Password change failed", {
                 error: error instanceof Error ? error.message : "Unknown error",
                 user_id: userId,
+            });
+            throw error;
+        }
+    }
+
+    async updateProfile(
+        userId: number,
+        data: { first_name?: string; last_name?: string; email?: string },
+    ): Promise<{
+        id: number;
+        first_name: string | null;
+        last_name: string | null;
+        email: string;
+        updated_at: Date;
+    }> {
+        try {
+            // Check if email is being updated and if it already exists
+            if (data.email) {
+                const existingUser = await prisma.user.findFirst({
+                    where: {
+                        email: data.email,
+                        id: { not: userId },
+                    },
+                });
+
+                if (existingUser) {
+                    logger.warn("Profile update attempt with existing email", {
+                        user_id: userId,
+                        email: data.email,
+                    });
+                    throw new Error("Email already exists");
+                }
+            }
+
+            // Update user profile
+            const updatedUser = await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    ...(data.first_name !== undefined && {
+                        first_name: data.first_name,
+                    }),
+                    ...(data.last_name !== undefined && {
+                        last_name: data.last_name,
+                    }),
+                    ...(data.email !== undefined && { email: data.email }),
+                },
+                select: {
+                    id: true,
+                    first_name: true,
+                    last_name: true,
+                    email: true,
+                    updated_at: true,
+                },
+            });
+
+            logger.info("User profile updated successfully", {
+                user_id: userId,
+                updated_fields: Object.keys(data),
+            });
+
+            return updatedUser;
+        } catch (error) {
+            logger.error("Profile update failed", {
+                error: error instanceof Error ? error.message : "Unknown error",
+                user_id: userId,
+                data,
             });
             throw error;
         }

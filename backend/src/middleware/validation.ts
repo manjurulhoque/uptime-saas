@@ -26,7 +26,15 @@ export const validate = (schema: ZodType) => {
                     path: req.path,
                 });
 
-                return res.status(400).json(errorResponse("Validation failed", "VALIDATION_ERROR", errorDetails));
+                return res
+                    .status(400)
+                    .json(
+                        errorResponse(
+                            "Validation failed",
+                            "VALIDATION_ERROR",
+                            errorDetails,
+                        ),
+                    );
             }
 
             // Handle unexpected errors
@@ -38,7 +46,9 @@ export const validate = (schema: ZodType) => {
                 path: req.path,
             });
 
-            return res.status(500).json(errorResponse("Validation error", "VALIDATION_ERROR"));
+            return res
+                .status(500)
+                .json(errorResponse("Validation error", "VALIDATION_ERROR"));
         }
     };
 };
@@ -89,6 +99,16 @@ export const authSchemas = {
             message: "New passwords do not match",
             path: ["confirm_new_password"],
         }),
+
+    updateProfile: z
+        .object({
+            first_name: z.string().min(1, "First name is required").optional(),
+            last_name: z.string().min(1, "Last name is required").optional(),
+            email: z.email("Please provide a valid email address").optional(),
+        })
+        .refine((data) => Object.keys(data).length > 0, {
+            message: "At least one field must be provided for update",
+        }),
 };
 
 // Monitor validation schemas
@@ -101,7 +121,7 @@ export const monitorSchemas = {
             })
             .int()
             .min(1, "Interval must be at least 1 minute")
-            .max(1440, "Interval cannot exceed 1440 minutes (24 hours)")
+            .max(1440, "Interval cannot exceed 1440 minutes (24 hours)"),
     }),
 
     update: z
@@ -138,7 +158,9 @@ export const errorHandler = (
         method: req.method,
     });
 
-    res.status(500).json(errorResponse("Internal server error", "INTERNAL_ERROR"));
+    res.status(500).json(
+        errorResponse("Internal server error", "INTERNAL_ERROR"),
+    );
 };
 
 // 404 handler
