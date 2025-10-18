@@ -114,9 +114,9 @@ router.post(
     validate(authSchemas.refreshToken),
     async (req: Request, res: Response) => {
         try {
-            const { refreshToken } = req.body;
+            const { refresh_token } = req.body;
 
-            const tokens = await authService.refreshToken(refreshToken);
+            const tokens = await authService.refreshToken(refresh_token);
 
             logger.info("Token refresh successful", {
                 ip: req.ip,
@@ -124,9 +124,7 @@ router.post(
             });
 
             res.status(200).json(successResponse({
-                data: {
-                    tokens,
-                }
+                tokens
             }));
         } catch (error) {
             logger.error("Token refresh endpoint error", {

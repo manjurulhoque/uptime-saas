@@ -70,7 +70,7 @@ export const authSchemas = {
     }),
 
     refreshToken: z.object({
-        refreshToken: z.string().min(1, "Refresh token is required"),
+        refresh_token: z.string().min(1, "Refresh token is required"),
     }),
 
     changePassword: z

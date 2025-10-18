@@ -8,7 +8,7 @@ import { ApiResponse } from "@/types/response";
 
 async function refreshAccessToken(token: JWT) {
     try {
-        if (!token.refreshToken) {
+        if (!token.refresh_token) {
             return {
                 error: "RefreshAccessTokenError",
             };
@@ -22,7 +22,7 @@ async function refreshAccessToken(token: JWT) {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    refresh_token: token.refreshToken,
+                    refresh_token: token.refresh_token,
                 }),
             }
         );
@@ -33,25 +33,40 @@ async function refreshAccessToken(token: JWT) {
                 refresh_token: string;
             };
         }>;
-        console.log("refreshedTokens", refreshedTokens);
 
         if (!response.ok) {
-            throw refreshedTokens;
-        }
-
-        if (!refreshedTokens.success) {
+            console.error(
+                "Token refresh failed:",
+                response.status,
+                refreshedTokens
+            );
             return {
                 error: "RefreshAccessTokenError",
             };
         }
 
+        if (!refreshedTokens.success) {
+            console.error("Token refresh unsuccessful:", refreshedTokens);
+            return {
+                error: "RefreshAccessTokenError",
+            };
+        }
+
+        // Decode the new access token to get its actual expiry
+        const { exp } = jwtDecode(
+            refreshedTokens.data?.tokens.access_token ?? ""
+        );
+
         return {
-            accessToken: refreshedTokens.data?.tokens.access_token ?? "",
-            refreshToken: refreshedTokens.data?.tokens.refresh_token ?? "",
-            accessTokenExpires: Date.now() + 60 * 60 * 1000 * 24, // 1 day to match backend
+            access_token: refreshedTokens.data?.tokens.access_token ?? "",
+            refresh_token: refreshedTokens.data?.tokens.refresh_token ?? "",
+            access_token_expires: exp
+                ? exp * 1000
+                : Date.now() + 60 * 60 * 1000, // Convert to milliseconds
             error: undefined,
         };
     } catch (error) {
+        console.error("RefreshAccessTokenError", error);
         return {
             error: "RefreshAccessTokenError",
         };
@@ -134,15 +149,22 @@ const authOptions: NextAuthOptions = {
                             error: refreshedTokens.error,
                         };
                     }
-                    // token.access_token = refreshedTokens.access_token as string;
-                    // token.refresh_token = refreshedTokens.refresh_token as string;
-                    // token.access_token_expires = refreshedTokens.access_token_expires as number;
+
+                    // Update the token with new access and refresh tokens
+                    token.access_token = refreshedTokens.access_token as string;
+                    token.refresh_token = refreshedTokens.refresh_token as string;
+                    token.access_token_expires = refreshedTokens.access_token_expires as number;
                 }
             }
 
             return token;
         },
         async session({ session, token }) {
+            // If there's a refresh token error, throw an error to force logout
+            if (token?.error === "RefreshAccessTokenError") {
+                throw new Error("RefreshAccessTokenError");
+            }
+
             if (token) {
                 session.user.id = token.sub!;
                 session.user.email = token.email!;
