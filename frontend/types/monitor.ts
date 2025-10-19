@@ -40,14 +40,14 @@ export interface Incident {
 }
 
 export interface MonitorStats {
-    totalChecks: number;
-    upChecks: number;
-    downChecks: number;
-    uptimePercentage: number;
-    avgResponseTime: number;
+    total_checks: number;
+    up_checks: number;
+    down_checks: number;
+    uptime_percentage: number;
+    avg_response_time: number;
     incidents: number;
-    lastCheck: string | null; // ISO date string
-    lastIncident: string | null; // ISO date string
+    last_check: string | null; // ISO date string
+    last_incident: string | null; // ISO date string
 }
 
 // Request/Response types for API calls
@@ -149,7 +149,7 @@ export interface MonitorQueryParams {
 }
 
 // Demo data types for development
-export interface DemoMonitor extends Monitor {
+export interface MonitorWithStats extends Monitor {
     checks?: MonitorCheck[];
     incidents?: Incident[];
     stats?: MonitorStats;

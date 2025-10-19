@@ -41,135 +41,10 @@ import {
     useUpdateMonitorStatusMutation,
     useDeleteMonitorMutation,
 } from "@/store/api/monitorApi";
-import type { DemoMonitor } from "@/types/monitor";
+import { Monitor, MonitorWithStats } from "@/types/monitor";
 import { MONITOR_STATUS } from "@/types/monitor";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-
-// Demo data for development
-const demoMonitors: DemoMonitor[] = [
-    {
-        id: 1,
-        url: "https://example.com",
-        interval: 5,
-        last_status: "UP",
-        last_checked_at: new Date().toISOString(),
-        is_active: true,
-        user_id: 1,
-        created_at: new Date(
-            Date.now() - 7 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-        stats: {
-            totalChecks: 2016,
-            upChecks: 2010,
-            downChecks: 6,
-            uptimePercentage: 99.7,
-            avgResponseTime: 245,
-            incidents: 2,
-            lastCheck: new Date().toISOString(),
-            lastIncident: new Date(
-                Date.now() - 2 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-        },
-    },
-    {
-        id: 2,
-        url: "https://api.example.com",
-        interval: 1,
-        last_status: "DOWN",
-        last_checked_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-        is_active: true,
-        user_id: 1,
-        created_at: new Date(
-            Date.now() - 14 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-        stats: {
-            totalChecks: 20160,
-            upChecks: 20120,
-            downChecks: 40,
-            uptimePercentage: 99.8,
-            avgResponseTime: 156,
-            incidents: 3,
-            lastCheck: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-            lastIncident: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-        },
-    },
-    {
-        id: 3,
-        url: "https://staging.example.com",
-        interval: 15,
-        last_status: "UP",
-        last_checked_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        is_active: false,
-        user_id: 1,
-        created_at: new Date(
-            Date.now() - 3 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-        stats: {
-            totalChecks: 288,
-            upChecks: 285,
-            downChecks: 3,
-            uptimePercentage: 98.96,
-            avgResponseTime: 320,
-            incidents: 1,
-            lastCheck: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-            lastIncident: new Date(
-                Date.now() - 1 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-        },
-    },
-    {
-        id: 4,
-        url: "https://blog.example.com",
-        interval: 10,
-        last_status: "UP",
-        last_checked_at: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
-        is_active: true,
-        user_id: 1,
-        created_at: new Date(
-            Date.now() - 30 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-        stats: {
-            totalChecks: 4320,
-            upChecks: 4315,
-            downChecks: 5,
-            uptimePercentage: 99.88,
-            avgResponseTime: 189,
-            incidents: 1,
-            lastCheck: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
-            lastIncident: new Date(
-                Date.now() - 7 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-        },
-    },
-    {
-        id: 5,
-        url: "https://cdn.example.com",
-        interval: 2,
-        last_status: "TIMEOUT",
-        last_checked_at: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-        is_active: true,
-        user_id: 1,
-        created_at: new Date(
-            Date.now() - 21 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-        stats: {
-            totalChecks: 15120,
-            upChecks: 15080,
-            downChecks: 40,
-            uptimePercentage: 99.74,
-            avgResponseTime: 95,
-            incidents: 4,
-            lastCheck: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-            lastIncident: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-        },
-    },
-];
 
 export default function MonitorsListPage() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -181,9 +56,9 @@ export default function MonitorsListPage() {
     const [deleteMonitor] = useDeleteMonitorMutation();
 
     // Use demo data if API is not available or loading
-    const monitors = monitorsData?.data?.monitors || demoMonitors;
+    const monitors = monitorsData?.data?.monitors as MonitorWithStats[];
 
-    const filteredMonitors = monitors.filter((monitor) => {
+    const filteredMonitors = monitors && monitors.filter((monitor: MonitorWithStats) => {
         const matchesSearch = monitor.url
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
@@ -357,8 +232,8 @@ export default function MonitorsListPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>
-                                    {filteredMonitors.length} Monitor
-                                    {filteredMonitors.length !== 1 ? "s" : ""}
+                                    {filteredMonitors?.length} Monitor
+                                    {filteredMonitors?.length !== 1 ? "s" : ""}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -378,7 +253,7 @@ export default function MonitorsListPage() {
                                             Using demo data
                                         </p>
                                     </div>
-                                ) : filteredMonitors.length === 0 ? (
+                                ) : filteredMonitors?.length === 0 ? (
                                     <div className="text-center py-8">
                                         <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -411,7 +286,7 @@ export default function MonitorsListPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {filteredMonitors.map((monitor) => (
+                                            {filteredMonitors?.map((monitor) => (
                                                 <TableRow key={monitor.id}>
                                                     <TableCell>
                                                         <div className="flex items-center space-x-2">
@@ -451,14 +326,14 @@ export default function MonitorsListPage() {
                                                     <TableCell>
                                                         <div className="text-sm">
                                                             <div className="font-medium text-gray-900">
-                                                                {monitor.stats?.uptimePercentage?.toFixed(
+                                                                {monitor?.stats?.avg_response_time?.toFixed(
                                                                     2
                                                                 ) || "N/A"}
                                                                 %
                                                             </div>
                                                             <div className="text-gray-500">
                                                                 {monitor.stats
-                                                                    ?.avgResponseTime ||
+                                                                    ?.avg_response_time ||
                                                                     "N/A"}
                                                                 ms avg
                                                             </div>
