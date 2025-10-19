@@ -1,21 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, User, Mail, Save, ArrowLeft, Link } from "lucide-react";
+import {
+    User,
+    Mail,
+    Save,
+    ArrowLeft,
+    AlertCircle,
+    CheckCircle,
+} from "lucide-react";
 import {
     useGetProfileQuery,
     useUpdateProfileMutation,
@@ -23,64 +21,110 @@ import {
 } from "@/store/api/profileApi";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import CenterLoader from "@/components/loaders/center-loader";
-
-const profileSchema = z.object({
-    first_name: z.string().min(1, "First name is required"),
-    last_name: z.string().min(1, "Last name is required"),
-    email: z.string().email("Please provide a valid email address"),
-});
-
-type ProfileFormData = z.infer<typeof profileSchema>;
+import Link from "next/link";
 
 export default function ProfilePage() {
     const { toast } = useToast();
-    const [isEditing, setIsEditing] = useState(false);
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [email, setEmail] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [firstNameError, setFirstNameError] = useState("");
+    const [lastNameError, setLastNameError] = useState("");
+    const [emailError, setEmailError] = useState("");
 
     const { data: profileData, isLoading, error } = useGetProfileQuery();
-    const [updateProfile, { isLoading: isUpdating }] =
-        useUpdateProfileMutation();
+    const [updateProfile] = useUpdateProfileMutation();
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors, isDirty },
-        reset,
-        watch,
-    } = useForm<ProfileFormData>({
-        resolver: zodResolver(profileSchema),
-        defaultValues: {
-            first_name: "",
-            last_name: "",
-            email: "",
-        },
-    });
+    const user = profileData?.data?.user;
 
-    // Update form when profile data loads
-    React.useEffect(() => {
-        if (profileData?.data?.user) {
-            const user = profileData.data.user;
-            reset({
-                first_name: user.first_name || "",
-                last_name: user.last_name || "",
-                email: user.email,
-            });
+    // Initialize form with profile data
+    useEffect(() => {
+        if (user) {
+            setFirstName(user.first_name || "");
+            setLastName(user.last_name || "");
+            setEmail(user.email || "");
         }
-    }, [profileData, reset]);
+    }, [user]);
 
-    const onSubmit = async (data: ProfileFormData) => {
+    const validateEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const handleFirstNameChange = (value: string) => {
+        setFirstName(value);
+        setFirstNameError("");
+
+        if (value.trim() && value.trim().length < 1) {
+            setFirstNameError("First name is required");
+        }
+    };
+
+    const handleLastNameChange = (value: string) => {
+        setLastName(value);
+        setLastNameError("");
+
+        if (value.trim() && value.trim().length < 1) {
+            setLastNameError("Last name is required");
+        }
+    };
+
+    const handleEmailChange = (value: string) => {
+        setEmail(value);
+        setEmailError("");
+
+        if (value && !validateEmail(value)) {
+            setEmailError("Please provide a valid email address");
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Clear previous errors
+        setFirstNameError("");
+        setLastNameError("");
+        setEmailError("");
+
+        let hasErrors = false;
+
+        if (!firstName.trim()) {
+            setFirstNameError("First name is required");
+            hasErrors = true;
+        }
+
+        if (!lastName.trim()) {
+            setLastNameError("Last name is required");
+            hasErrors = true;
+        }
+
+        if (!email.trim()) {
+            setEmailError("Email is required");
+            hasErrors = true;
+        } else if (!validateEmail(email)) {
+            setEmailError("Please provide a valid email address");
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
         try {
             const updateData: UpdateProfileRequest = {};
 
             // Only include fields that have changed
-            if (data.first_name !== profileData?.data?.user?.first_name) {
-                updateData.first_name = data.first_name;
+            if (firstName !== user?.first_name) {
+                updateData.first_name = firstName.trim();
             }
-            if (data.last_name !== profileData?.data?.user?.last_name) {
-                updateData.last_name = data.last_name;
+            if (lastName !== user?.last_name) {
+                updateData.last_name = lastName.trim();
             }
-            if (data.email !== profileData?.data?.user?.email) {
-                updateData.email = data.email;
+            if (email !== user?.email) {
+                updateData.email = email.trim();
             }
 
             if (Object.keys(updateData).length === 0) {
@@ -94,18 +138,16 @@ export default function ProfilePage() {
             await updateProfile(updateData).unwrap();
 
             toast({
-                title: "Profile updated",
-                description: "Your profile has been updated successfully.",
+                title: "Profile updated successfully",
+                description: "Your profile has been updated",
             });
-
-            setIsEditing(false);
         } catch (error: any) {
-            console.error("Profile update error:", error);
-
             let errorMessage = "Failed to update profile. Please try again.";
 
             if (error?.data?.message) {
                 errorMessage = error.data.message;
+            } else if (error?.data?.error) {
+                errorMessage = error.data.error;
             } else if (
                 error?.data?.errors &&
                 Array.isArray(error.data.errors)
@@ -116,42 +158,84 @@ export default function ProfilePage() {
             }
 
             toast({
-                title: "Update failed",
+                title: "Error updating profile",
                 description: errorMessage,
                 variant: "destructive",
             });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
-    const handleCancel = () => {
-        if (profileData?.data?.user) {
-            const user = profileData.data.user;
-            reset({
-                first_name: user.first_name || "",
-                last_name: user.last_name || "",
-                email: user.email,
-            });
-        }
-        setIsEditing(false);
-    };
+    const isFormValid =
+        firstName.trim() &&
+        lastName.trim() &&
+        email.trim() &&
+        validateEmail(email) &&
+        !isSubmitting;
 
     if (isLoading) {
         return (
-            <CenterLoader />
+            <SidebarInset>
+                <div className="flex flex-col">
+                    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                        <SidebarTrigger className="-ml-1" />
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-lg font-semibold">
+                                Loading...
+                            </h1>
+                        </div>
+                    </header>
+                    <div className="flex-1 p-4">
+                        <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                            <p className="text-gray-600 mt-2">
+                                Loading profile details...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </SidebarInset>
         );
     }
 
-    if (error) {
+    if (error || !user) {
         return (
-            <Alert variant="destructive">
-                <AlertDescription>
-                    Failed to load profile. Please try refreshing the page.
-                </AlertDescription>
-            </Alert>
+            <SidebarInset>
+                <div className="flex flex-col">
+                    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                        <SidebarTrigger className="-ml-1" />
+                        <div className="flex items-center gap-2">
+                            <Link href="/dashboard">
+                                <Button variant="ghost" size="sm">
+                                    <ArrowLeft className="h-4 w-4 mr-2" />
+                                    Back to Dashboard
+                                </Button>
+                            </Link>
+                            <h1 className="text-lg font-semibold">
+                                Profile Error
+                            </h1>
+                        </div>
+                    </header>
+                    <div className="flex-1 p-4">
+                        <div className="text-center py-8">
+                            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                Failed to load profile
+                            </h3>
+                            <p className="text-gray-600 mb-4">
+                                Unable to load your profile information. Please
+                                try refreshing the page.
+                            </p>
+                            <Link href="/dashboard">
+                                <Button>Back to Dashboard</Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </SidebarInset>
         );
     }
-
-    const user = profileData?.data?.user;
 
     return (
         <SidebarInset>
@@ -159,7 +243,7 @@ export default function ProfilePage() {
                 <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
                     <SidebarTrigger className="-ml-1" />
                     <div className="flex items-center gap-2">
-                        <Link href="/dashboard/monitors">
+                        <Link href="/dashboard">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Back to Dashboard
@@ -173,33 +257,22 @@ export default function ProfilePage() {
 
                 <div className="flex-1 p-4">
                     <div className="max-w-2xl mx-auto">
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
+                        <div className="mb-8">
+                            <p className="text-gray-600">
+                                Update your profile information
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Personal Information */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
                                         <User className="h-5 w-5" />
-                                        <CardTitle>Profile Settings</CardTitle>
-                                    </div>
-                                    {!isEditing && (
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setIsEditing(true)}
-                                            disabled={isUpdating}
-                                        >
-                                            Edit Profile
-                                        </Button>
-                                    )}
-                                </div>
-                                <CardDescription>
-                                    Manage your account settings and personal
-                                    information.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <form
-                                    onSubmit={handleSubmit(onSubmit)}
-                                    className="space-y-6"
-                                >
+                                        Personal Information
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="first_name">
@@ -207,20 +280,26 @@ export default function ProfilePage() {
                                             </Label>
                                             <Input
                                                 id="first_name"
-                                                {...register("first_name")}
-                                                disabled={
-                                                    !isEditing || isUpdating
+                                                placeholder="Enter your first name"
+                                                value={firstName}
+                                                onChange={(e) =>
+                                                    handleFirstNameChange(
+                                                        e.target.value
+                                                    )
                                                 }
                                                 className={
-                                                    errors.first_name
+                                                    firstNameError
                                                         ? "border-red-500"
                                                         : ""
                                                 }
                                             />
-                                            {errors.first_name && (
-                                                <p className="text-sm text-red-500">
-                                                    {errors.first_name.message}
-                                                </p>
+                                            {firstNameError && (
+                                                <Alert variant="destructive">
+                                                    <AlertCircle className="h-4 w-4" />
+                                                    <AlertDescription>
+                                                        {firstNameError}
+                                                    </AlertDescription>
+                                                </Alert>
                                             )}
                                         </div>
 
@@ -230,20 +309,26 @@ export default function ProfilePage() {
                                             </Label>
                                             <Input
                                                 id="last_name"
-                                                {...register("last_name")}
-                                                disabled={
-                                                    !isEditing || isUpdating
+                                                placeholder="Enter your last name"
+                                                value={lastName}
+                                                onChange={(e) =>
+                                                    handleLastNameChange(
+                                                        e.target.value
+                                                    )
                                                 }
                                                 className={
-                                                    errors.last_name
+                                                    lastNameError
                                                         ? "border-red-500"
                                                         : ""
                                                 }
                                             />
-                                            {errors.last_name && (
-                                                <p className="text-sm text-red-500">
-                                                    {errors.last_name.message}
-                                                </p>
+                                            {lastNameError && (
+                                                <Alert variant="destructive">
+                                                    <AlertCircle className="h-4 w-4" />
+                                                    <AlertDescription>
+                                                        {lastNameError}
+                                                    </AlertDescription>
+                                                </Alert>
                                             )}
                                         </div>
                                     </div>
@@ -252,127 +337,177 @@ export default function ProfilePage() {
                                         <Label htmlFor="email">
                                             Email Address
                                         </Label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                id="email"
-                                                type="email"
-                                                {...register("email")}
-                                                disabled={
-                                                    !isEditing || isUpdating
-                                                }
-                                                className={`pl-10 ${
-                                                    errors.email
-                                                        ? "border-red-500"
-                                                        : ""
-                                                }`}
-                                            />
-                                        </div>
-                                        {errors.email && (
-                                            <p className="text-sm text-red-500">
-                                                {errors.email.message}
-                                            </p>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="Enter your email address"
+                                            value={email}
+                                            onChange={(e) =>
+                                                handleEmailChange(
+                                                    e.target.value
+                                                )
+                                            }
+                                            className={
+                                                emailError
+                                                    ? "border-red-500"
+                                                    : ""
+                                            }
+                                        />
+                                        {emailError && (
+                                            <Alert variant="destructive">
+                                                <AlertCircle className="h-4 w-4" />
+                                                <AlertDescription>
+                                                    {emailError}
+                                                </AlertDescription>
+                                            </Alert>
                                         )}
+                                        <p className="text-sm text-gray-600">
+                                            This email will be used for account
+                                            notifications and password resets.
+                                        </p>
                                     </div>
+                                </CardContent>
+                            </Card>
 
-                                    {/* Account Info */}
-                                    <div className="pt-4 border-t">
-                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                                            Account Information
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <span className="font-medium">
-                                                    Account Type:
-                                                </span>
-                                                <span
-                                                    className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                                                        user?.is_admin
-                                                            ? "bg-purple-100 text-purple-800"
-                                                            : "bg-blue-100 text-blue-800"
-                                                    }`}
-                                                >
-                                                    {user?.is_admin
-                                                        ? "Admin"
-                                                        : "User"}
-                                                </span>
+                            {/* Account Information */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <CheckCircle className="h-5 w-5" />
+                                        Account Information
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Account Type</Label>
+                                                <div className="flex items-center">
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                            user?.is_admin
+                                                                ? "bg-purple-100 text-purple-800"
+                                                                : "bg-blue-100 text-blue-800"
+                                                        }`}
+                                                    >
+                                                        {user?.is_admin
+                                                            ? "Admin"
+                                                            : "User"}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span className="font-medium">
-                                                    Status:
-                                                </span>
-                                                <span
-                                                    className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                                                        user?.is_active
-                                                            ? "bg-green-100 text-green-800"
-                                                            : "bg-red-100 text-red-800"
-                                                    }`}
-                                                >
-                                                    {user?.is_active
-                                                        ? "Active"
-                                                        : "Inactive"}
-                                                </span>
+                                            <div className="space-y-2">
+                                                <Label>Status</Label>
+                                                <div className="flex items-center">
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                            user?.is_active
+                                                                ? "bg-green-100 text-green-800"
+                                                                : "bg-red-100 text-red-800"
+                                                        }`}
+                                                    >
+                                                        {user?.is_active
+                                                            ? "Active"
+                                                            : "Inactive"}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span className="font-medium">
-                                                    Member since:
-                                                </span>
-                                                <span className="ml-2 text-muted-foreground">
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Member Since</Label>
+                                                <p className="text-sm text-gray-600">
                                                     {user?.created_at
                                                         ? new Date(
                                                               user.created_at
                                                           ).toLocaleDateString()
                                                         : "N/A"}
-                                                </span>
+                                                </p>
                                             </div>
                                             {user?.updated_at && (
-                                                <div>
-                                                    <span className="font-medium">
-                                                        Last updated:
-                                                    </span>
-                                                    <span className="ml-2 text-muted-foreground">
+                                                <div className="space-y-2">
+                                                    <Label>Last Updated</Label>
+                                                    <p className="text-sm text-gray-600">
                                                         {new Date(
                                                             user.updated_at
                                                         ).toLocaleDateString()}
-                                                    </span>
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
+                                </CardContent>
+                            </Card>
 
-                                    {isEditing && (
-                                        <div className="flex justify-end space-x-2 pt-4">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={handleCancel}
-                                                disabled={isUpdating}
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                type="submit"
-                                                disabled={
-                                                    !isDirty || isUpdating
-                                                }
-                                            >
-                                                {isUpdating ? (
-                                                    <>
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                        Saving...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Save className="mr-2 h-4 w-4" />
-                                                        Save Changes
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </div>
+                            {/* Profile Summary */}
+                            {firstName &&
+                                lastName &&
+                                email &&
+                                validateEmail(email) && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <CheckCircle className="h-5 w-5 text-green-600" />
+                                                Profile Summary
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">
+                                                        Name:
+                                                    </span>
+                                                    <span className="font-medium">
+                                                        {firstName} {lastName}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">
+                                                        Email:
+                                                    </span>
+                                                    <span className="font-medium">
+                                                        {email}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">
+                                                        Account Type:
+                                                    </span>
+                                                    <span className="font-medium text-ship-cove-600">
+                                                        {user?.is_admin
+                                                            ? "Admin"
+                                                            : "User"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                            {/* Actions */}
+                            <div className="flex items-center justify-between">
+                                <Link href="/dashboard">
+                                    <Button variant="outline">Cancel</Button>
+                                </Link>
+                                <Button
+                                    type="submit"
+                                    disabled={!isFormValid}
+                                    className="flex items-center gap-2"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Updating Profile...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="h-4 w-4" />
+                                            Update Profile
+                                        </>
                                     )}
-                                </form>
-                            </CardContent>
-                        </Card>
+                                </Button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
