@@ -20,7 +20,6 @@ import {
     AlertCircle,
     CheckCircle,
     Save,
-    Mail,
     Bell,
 } from "lucide-react";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -29,7 +28,7 @@ import {
     useUpdateMonitorMutation,
     useUpdateMonitorStatusMutation,
 } from "@/store/api/monitorApi";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
@@ -61,7 +60,6 @@ export default function EditMonitorPage() {
     const [alertOnSlow, setAlertOnSlow] = useState<boolean>(false);
     const [slowThreshold, setSlowThreshold] = useState<number>(5000);
 
-    const { toast } = useToast();
     const router = useRouter();
     const [updateMonitor] = useUpdateMonitorMutation();
     const [updateMonitorStatus] = useUpdateMonitorStatusMutation();
@@ -76,6 +74,7 @@ export default function EditMonitorPage() {
 
     // Initialize form with monitor data
     useEffect(() => {
+        console.log("monitor", monitor);
         if (monitor) {
             setUrl(monitor.url);
             setInterval(monitor.interval);
@@ -147,18 +146,11 @@ export default function EditMonitorPage() {
 
             await Promise.all(updatePromises);
 
-            toast({
-                title: "Monitor updated successfully",
-                description: `Monitor for ${url} has been updated`,
-            });
+            toast.success(`Monitor for ${url} has been updated`);
 
             router.push(`/dashboard/monitors/${monitorId}`);
         } catch (error: any) {
-            toast({
-                title: "Error updating monitor",
-                description: error?.data?.error || "Failed to update monitor",
-                variant: "destructive",
-            });
+            toast.error(error?.data?.error || "Failed to update monitor");
         } finally {
             setIsSubmitting(false);
         }
@@ -246,461 +238,557 @@ export default function EditMonitorPage() {
                 </header>
 
                 <div className="flex-1 p-4">
-                    <div className="max-w-2xl mx-auto">
-                        <div className="mb-8">
-                            <p className="text-gray-600">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-semibold text-gray-900">
+                                Edit Monitor
+                            </h2>
+                            <p className="text-gray-600 mt-1">
                                 Update your monitor settings
                             </p>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* URL Input */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Globe className="h-5 w-5" />
-                                        Website URL
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="url">
-                                            URL to monitor
-                                        </Label>
-                                        <Input
-                                            id="url"
-                                            type="url"
-                                            placeholder="https://example.com"
-                                            value={url}
-                                            onChange={(e) =>
-                                                handleUrlChange(e.target.value)
-                                            }
-                                            className={
-                                                urlError ? "border-red-500" : ""
-                                            }
-                                        />
-                                        {urlError && (
-                                            <Alert variant="destructive">
-                                                <AlertCircle className="h-4 w-4" />
-                                                <AlertDescription>
-                                                    {urlError}
-                                                </AlertDescription>
-                                            </Alert>
-                                        )}
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                        <p>
-                                            Enter the full URL including the
-                                            protocol (http:// or https://)
-                                        </p>
-                                        <p className="mt-1">Examples:</p>
-                                        <ul className="list-disc list-inside ml-4 space-y-1">
-                                            <li>https://example.com</li>
-                                            <li>
-                                                https://api.example.com/health
-                                            </li>
-                                            <li>http://staging.example.com</li>
-                                        </ul>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Interval Selection */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Clock className="h-5 w-5" />
-                                        Check Interval
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="interval">
-                                            How often to check
-                                        </Label>
-                                        <Select
-                                            value={interval.toString()}
-                                            onValueChange={(value) =>
-                                                setInterval(Number(value))
-                                            }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select check interval" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {INTERVAL_OPTIONS.map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value.toString()}
-                                                        >
-                                                            <div>
-                                                                <div className="font-medium">
-                                                                    {
-                                                                        option.label
-                                                                    }
-                                                                </div>
-                                                                <div className="text-sm text-gray-500">
-                                                                    {
-                                                                        option.description
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        </SelectItem>
-                                                    )
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                        <p>
-                                            Choose how frequently you want to
-                                            check the URL:
-                                        </p>
-                                        <ul className="list-disc list-inside ml-4 space-y-1 mt-2">
-                                            <li>
-                                                <strong>1-2 minutes:</strong>{" "}
-                                                For critical services
-                                            </li>
-                                            <li>
-                                                <strong>5-10 minutes:</strong>{" "}
-                                                For most websites and APIs
-                                            </li>
-                                            <li>
-                                                <strong>15-30 minutes:</strong>{" "}
-                                                For less critical services
-                                            </li>
-                                            <li>
-                                                <strong>1 hour:</strong> For
-                                                development/staging environments
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Active Status */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <CheckCircle className="h-5 w-5" />
-                                        Status
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-1">
-                                            <Label htmlFor="is-active">
-                                                Active
-                                            </Label>
-                                            <p className="text-sm text-gray-600">
-                                                Toggle to pause or resume
-                                                monitoring for this URL.
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            id="is-active"
-                                            checked={isActive}
-                                            onCheckedChange={setIsActive}
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Alert Settings */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Bell className="h-5 w-5" />
-                                        Alert Settings
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    {/* Enable Alerts */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-1">
-                                            <Label htmlFor="alert-enabled">
-                                                Enable Email Alerts
-                                            </Label>
-                                            <p className="text-sm text-gray-600">
-                                                Send email notifications when
-                                                this monitor changes status.
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            id="alert-enabled"
-                                            checked={alertEnabled}
-                                            onCheckedChange={setAlertEnabled}
-                                        />
-                                    </div>
-
-                                    {alertEnabled && (
-                                        <>
-                                            {/* Alert Email */}
+                        <form onSubmit={handleSubmit}>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Left Column - Form Fields */}
+                                <div className="space-y-6">
+                                    {/* URL Input */}
+                                    <Card>
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="flex items-center gap-2 text-lg">
+                                                <Globe className="h-5 w-5" />
+                                                Website URL
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="alert-email">
-                                                    Alert Email Address
+                                                <Label htmlFor="url">
+                                                    URL to monitor
                                                 </Label>
                                                 <Input
-                                                    id="alert-email"
-                                                    type="email"
-                                                    placeholder="alerts@example.com"
-                                                    value={alertEmail}
+                                                    id="url"
+                                                    type="url"
+                                                    placeholder="https://example.com"
+                                                    value={url}
                                                     onChange={(e) =>
-                                                        setAlertEmail(
+                                                        handleUrlChange(
                                                             e.target.value
                                                         )
                                                     }
-                                                />
-                                                <p className="text-sm text-gray-600">
-                                                    Leave empty to use your
-                                                    account email address.
-                                                </p>
-                                            </div>
-
-                                            {/* Alert Types */}
-                                            <div className="space-y-4">
-                                                <Label>Alert Conditions</Label>
-
-                                                <div className="space-y-3">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="space-y-1">
-                                                            <Label htmlFor="alert-down">
-                                                                When Monitor
-                                                                Goes Down
-                                                            </Label>
-                                                            <p className="text-sm text-gray-600">
-                                                                Alert when the
-                                                                website becomes
-                                                                unreachable.
-                                                            </p>
-                                                        </div>
-                                                        <Switch
-                                                            id="alert-down"
-                                                            checked={
-                                                                alertOnDown
-                                                            }
-                                                            onCheckedChange={
-                                                                setAlertOnDown
-                                                            }
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="space-y-1">
-                                                            <Label htmlFor="alert-up">
-                                                                When Monitor
-                                                                Comes Back Up
-                                                            </Label>
-                                                            <p className="text-sm text-gray-600">
-                                                                Alert when the
-                                                                website becomes
-                                                                available again.
-                                                            </p>
-                                                        </div>
-                                                        <Switch
-                                                            id="alert-up"
-                                                            checked={alertOnUp}
-                                                            onCheckedChange={
-                                                                setAlertOnUp
-                                                            }
-                                                        />
-                                                    </div>
-
-                                                    <div className="space-y-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="space-y-1">
-                                                                <Label htmlFor="alert-slow">
-                                                                    When
-                                                                    Response is
-                                                                    Slow
-                                                                </Label>
-                                                                <p className="text-sm text-gray-600">
-                                                                    Alert when
-                                                                    response
-                                                                    time exceeds
-                                                                    threshold.
-                                                                </p>
-                                                            </div>
-                                                            <Switch
-                                                                id="alert-slow"
-                                                                checked={
-                                                                    alertOnSlow
-                                                                }
-                                                                onCheckedChange={
-                                                                    setAlertOnSlow
-                                                                }
-                                                            />
-                                                        </div>
-
-                                                        {alertOnSlow && (
-                                                            <div className="space-y-2">
-                                                                <Label htmlFor="slow-threshold">
-                                                                    Slow
-                                                                    Response
-                                                                    Threshold
-                                                                    (milliseconds)
-                                                                </Label>
-                                                                <Input
-                                                                    id="slow-threshold"
-                                                                    type="number"
-                                                                    placeholder="5000"
-                                                                    value={
-                                                                        slowThreshold
-                                                                    }
-                                                                    onChange={(
-                                                                        e
-                                                                    ) =>
-                                                                        setSlowThreshold(
-                                                                            Number(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                            )
-                                                                        )
-                                                                    }
-                                                                    min="1000"
-                                                                    max="30000"
-                                                                />
-                                                                <p className="text-sm text-gray-600">
-                                                                    Alert when
-                                                                    response
-                                                                    time exceeds
-                                                                    this value
-                                                                    (1000-30000ms).
-                                                                </p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-                                </CardContent>
-                            </Card>
-
-                            {/* Summary */}
-                            {url && validateUrl(url) && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <CheckCircle className="h-5 w-5 text-green-600" />
-                                            Monitor Summary
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">
-                                                    URL:
-                                                </span>
-                                                <span className="font-medium">
-                                                    {url}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">
-                                                    Check Interval:
-                                                </span>
-                                                <span className="font-medium">
-                                                    {
-                                                        INTERVAL_OPTIONS.find(
-                                                            (opt) =>
-                                                                opt.value ===
-                                                                interval
-                                                        )?.label
+                                                    className={
+                                                        urlError
+                                                            ? "border-red-500"
+                                                            : ""
                                                     }
-                                                </span>
+                                                />
+                                                {urlError && (
+                                                    <Alert variant="destructive">
+                                                        <AlertCircle className="h-4 w-4" />
+                                                        <AlertDescription>
+                                                            {urlError}
+                                                        </AlertDescription>
+                                                    </Alert>
+                                                )}
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">
-                                                    Status:
-                                                </span>
-                                                <span className="font-medium text-ship-cove-600">
-                                                    {isActive
-                                                        ? "Active"
-                                                        : "Paused"}
-                                                </span>
+                                            <div className="text-sm text-gray-600">
+                                                <p>
+                                                    Enter the full URL including
+                                                    the protocol (http:// or
+                                                    https://)
+                                                </p>
+                                                <p className="mt-2 font-medium">
+                                                    Examples:
+                                                </p>
+                                                <ul className="list-disc list-inside ml-4 space-y-1 mt-1">
+                                                    <li>https://example.com</li>
+                                                    <li>
+                                                        https://api.example.com/health
+                                                    </li>
+                                                    <li>
+                                                        http://staging.example.com
+                                                    </li>
+                                                </ul>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">
-                                                    Email Alerts:
-                                                </span>
-                                                <span className="font-medium">
-                                                    {alertEnabled
-                                                        ? "Enabled"
-                                                        : "Disabled"}
-                                                </span>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Interval Selection */}
+                                    <Card>
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="flex items-center gap-2 text-lg">
+                                                <Clock className="h-5 w-5" />
+                                                Check Interval
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="interval">
+                                                    How often to check
+                                                </Label>
+                                                <Select
+                                                    value={interval.toString()}
+                                                    onValueChange={(value) =>
+                                                        setInterval(
+                                                            Number(value)
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select check interval" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {INTERVAL_OPTIONS.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value
+                                                                    }
+                                                                    value={option.value.toString()}
+                                                                >
+                                                                    <div>
+                                                                        <div className="font-medium">
+                                                                            {
+                                                                                option.label
+                                                                            }
+                                                                        </div>
+                                                                        <div className="text-sm text-gray-500">
+                                                                            {
+                                                                                option.description
+                                                                            }
+                                                                        </div>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
+                                            <div className="text-sm text-gray-600">
+                                                <p className="font-medium">
+                                                    Recommended intervals:
+                                                </p>
+                                                <ul className="list-disc list-inside ml-4 space-y-1 mt-2">
+                                                    <li>
+                                                        <strong>
+                                                            1-2 minutes:
+                                                        </strong>{" "}
+                                                        Critical services
+                                                    </li>
+                                                    <li>
+                                                        <strong>
+                                                            5-10 minutes:
+                                                        </strong>{" "}
+                                                        Most websites and APIs
+                                                    </li>
+                                                    <li>
+                                                        <strong>
+                                                            15-30 minutes:
+                                                        </strong>{" "}
+                                                        Less critical services
+                                                    </li>
+                                                    <li>
+                                                        <strong>1 hour:</strong>{" "}
+                                                        Development/staging
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Right Column - Status, Alerts, Summary and Actions */}
+                                <div className="space-y-6">
+                                    {/* Active Status */}
+                                    <Card>
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="flex items-center gap-2 text-lg">
+                                                <CheckCircle className="h-5 w-5" />
+                                                Status
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-1">
+                                                    <Label htmlFor="is-active">
+                                                        Active
+                                                    </Label>
+                                                    <p className="text-sm text-gray-600">
+                                                        Toggle to pause or
+                                                        resume monitoring for
+                                                        this URL.
+                                                    </p>
+                                                </div>
+                                                <Switch
+                                                    id="is-active"
+                                                    checked={isActive}
+                                                    onCheckedChange={
+                                                        setIsActive
+                                                    }
+                                                />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Alert Settings */}
+                                    <Card>
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="flex items-center gap-2 text-lg">
+                                                <Bell className="h-5 w-5" />
+                                                Alert Settings
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            {/* Enable Alerts */}
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-1">
+                                                    <Label htmlFor="alert-enabled">
+                                                        Enable Email Alerts
+                                                    </Label>
+                                                    <p className="text-sm text-gray-600">
+                                                        Send email notifications
+                                                        when this monitor
+                                                        changes status.
+                                                    </p>
+                                                </div>
+                                                <Switch
+                                                    id="alert-enabled"
+                                                    checked={alertEnabled}
+                                                    onCheckedChange={
+                                                        setAlertEnabled
+                                                    }
+                                                />
+                                            </div>
+
                                             {alertEnabled && (
                                                 <>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-600">
-                                                            Alert Email:
-                                                        </span>
-                                                        <span className="font-medium">
-                                                            {alertEmail ||
-                                                                "Account Email"}
-                                                        </span>
+                                                    {/* Alert Email */}
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="alert-email">
+                                                            Alert Email Address
+                                                        </Label>
+                                                        <Input
+                                                            id="alert-email"
+                                                            type="email"
+                                                            placeholder="alerts@example.com"
+                                                            value={alertEmail}
+                                                            onChange={(e) =>
+                                                                setAlertEmail(
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
+                                                        />
+                                                        <p className="text-sm text-gray-600">
+                                                            Leave empty to use
+                                                            your account email
+                                                            address.
+                                                        </p>
                                                     </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-600">
-                                                            Alert Types:
-                                                        </span>
-                                                        <span className="font-medium">
-                                                            {[
-                                                                alertOnDown &&
-                                                                    "Down",
-                                                                alertOnUp &&
-                                                                    "Up",
-                                                                alertOnSlow &&
-                                                                    "Slow",
-                                                            ]
-                                                                .filter(Boolean)
-                                                                .join(", ") ||
-                                                                "None"}
-                                                        </span>
-                                                    </div>
-                                                    {alertOnSlow && (
-                                                        <div className="flex justify-between">
-                                                            <span className="text-gray-600">
-                                                                Slow Threshold:
-                                                            </span>
-                                                            <span className="font-medium">
-                                                                {slowThreshold}
-                                                                ms
-                                                            </span>
+
+                                                    {/* Alert Types */}
+                                                    <div className="space-y-3">
+                                                        <Label className="text-sm font-medium">
+                                                            Alert Conditions
+                                                        </Label>
+
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="space-y-1">
+                                                                    <Label
+                                                                        htmlFor="alert-down"
+                                                                        className="text-sm"
+                                                                    >
+                                                                        When
+                                                                        Monitor
+                                                                        Goes
+                                                                        Down
+                                                                    </Label>
+                                                                    <p className="text-xs text-gray-600">
+                                                                        Alert
+                                                                        when
+                                                                        website
+                                                                        becomes
+                                                                        unreachable
+                                                                    </p>
+                                                                </div>
+                                                                <Switch
+                                                                    id="alert-down"
+                                                                    checked={
+                                                                        alertOnDown
+                                                                    }
+                                                                    onCheckedChange={
+                                                                        setAlertOnDown
+                                                                    }
+                                                                />
+                                                            </div>
+
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="space-y-1">
+                                                                    <Label
+                                                                        htmlFor="alert-up"
+                                                                        className="text-sm"
+                                                                    >
+                                                                        When
+                                                                        Monitor
+                                                                        Comes
+                                                                        Back Up
+                                                                    </Label>
+                                                                    <p className="text-xs text-gray-600">
+                                                                        Alert
+                                                                        when
+                                                                        website
+                                                                        becomes
+                                                                        available
+                                                                        again
+                                                                    </p>
+                                                                </div>
+                                                                <Switch
+                                                                    id="alert-up"
+                                                                    checked={
+                                                                        alertOnUp
+                                                                    }
+                                                                    onCheckedChange={
+                                                                        setAlertOnUp
+                                                                    }
+                                                                />
+                                                            </div>
+
+                                                            <div className="space-y-3">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="space-y-1">
+                                                                        <Label
+                                                                            htmlFor="alert-slow"
+                                                                            className="text-sm"
+                                                                        >
+                                                                            When
+                                                                            Response
+                                                                            is
+                                                                            Slow
+                                                                        </Label>
+                                                                        <p className="text-xs text-gray-600">
+                                                                            Alert
+                                                                            when
+                                                                            response
+                                                                            time
+                                                                            exceeds
+                                                                            threshold
+                                                                        </p>
+                                                                    </div>
+                                                                    <Switch
+                                                                        id="alert-slow"
+                                                                        checked={
+                                                                            alertOnSlow
+                                                                        }
+                                                                        onCheckedChange={
+                                                                            setAlertOnSlow
+                                                                        }
+                                                                    />
+                                                                </div>
+
+                                                                {alertOnSlow && (
+                                                                    <div className="space-y-2">
+                                                                        <Label
+                                                                            htmlFor="slow-threshold"
+                                                                            className="text-sm"
+                                                                        >
+                                                                            Slow
+                                                                            Response
+                                                                            Threshold
+                                                                            (ms)
+                                                                        </Label>
+                                                                        <Input
+                                                                            id="slow-threshold"
+                                                                            type="number"
+                                                                            placeholder="5000"
+                                                                            value={
+                                                                                slowThreshold
+                                                                            }
+                                                                            onChange={(
+                                                                                e
+                                                                            ) =>
+                                                                                setSlowThreshold(
+                                                                                    Number(
+                                                                                        e
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
+                                                                                )
+                                                                            }
+                                                                            min="1000"
+                                                                            max="30000"
+                                                                        />
+                                                                        <p className="text-xs text-gray-600">
+                                                                            Alert
+                                                                            when
+                                                                            response
+                                                                            time
+                                                                            exceeds
+                                                                            this
+                                                                            value
+                                                                            (1000-30000ms)
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    )}
+                                                    </div>
                                                 </>
                                             )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
+                                        </CardContent>
+                                    </Card>
 
-                            {/* Actions */}
-                            <div className="flex items-center justify-between">
-                                <Link href={`/dashboard/monitors/${monitorId}`}>
-                                    <Button variant="outline">Cancel</Button>
-                                </Link>
-                                <Button
-                                    type="submit"
-                                    disabled={!isFormValid}
-                                    className="flex items-center gap-2"
-                                >
-                                    {isSubmitting ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Updating Monitor...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="h-4 w-4" />
-                                            Update Monitor
-                                        </>
-                                    )}
-                                </Button>
+                                    {/* Summary */}
+                                    <Card>
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="flex items-center gap-2 text-lg">
+                                                <CheckCircle className="h-5 w-5 text-green-600" />
+                                                Monitor Summary
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {url && validateUrl(url) ? (
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-gray-600 font-medium">
+                                                            URL:
+                                                        </span>
+                                                        <span className="font-medium text-right break-all">
+                                                            {url}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-gray-600 font-medium">
+                                                            Check Interval:
+                                                        </span>
+                                                        <span className="font-medium">
+                                                            {
+                                                                INTERVAL_OPTIONS.find(
+                                                                    (opt) =>
+                                                                        opt.value ===
+                                                                        interval
+                                                                )?.label
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-gray-600 font-medium">
+                                                            Status:
+                                                        </span>
+                                                        <span className="font-medium text-ship-cove-600">
+                                                            {isActive
+                                                                ? "Active"
+                                                                : "Paused"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-gray-600 font-medium">
+                                                            Email Alerts:
+                                                        </span>
+                                                        <span className="font-medium">
+                                                            {alertEnabled
+                                                                ? "Enabled"
+                                                                : "Disabled"}
+                                                        </span>
+                                                    </div>
+                                                    {alertEnabled && (
+                                                        <>
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-gray-600 font-medium">
+                                                                    Alert Email:
+                                                                </span>
+                                                                <span className="font-medium text-right break-all">
+                                                                    {alertEmail ||
+                                                                        "Account Email"}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-gray-600 font-medium">
+                                                                    Alert Types:
+                                                                </span>
+                                                                <span className="font-medium text-right">
+                                                                    {[
+                                                                        alertOnDown &&
+                                                                            "Down",
+                                                                        alertOnUp &&
+                                                                            "Up",
+                                                                        alertOnSlow &&
+                                                                            "Slow",
+                                                                    ]
+                                                                        .filter(
+                                                                            Boolean
+                                                                        )
+                                                                        .join(
+                                                                            ", "
+                                                                        ) ||
+                                                                        "None"}
+                                                                </span>
+                                                            </div>
+                                                            {alertOnSlow && (
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-gray-600 font-medium">
+                                                                        Slow
+                                                                        Threshold:
+                                                                    </span>
+                                                                    <span className="font-medium">
+                                                                        {
+                                                                            slowThreshold
+                                                                        }
+                                                                        ms
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-8">
+                                                    <Globe className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                                    <p className="text-gray-500 text-sm">
+                                                        Enter a valid URL to see
+                                                        monitor summary
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Actions */}
+                                    <Card>
+                                        <CardContent className="pt-6">
+                                            <div className="space-y-4">
+                                                <Button
+                                                    type="submit"
+                                                    disabled={!isFormValid}
+                                                    className="w-full flex items-center justify-center gap-2"
+                                                    size="lg"
+                                                >
+                                                    {isSubmitting ? (
+                                                        <>
+                                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                            Updating Monitor...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="h-4 w-4" />
+                                                            Update Monitor
+                                                        </>
+                                                    )}
+                                                </Button>
+                                                <Link
+                                                    href={`/dashboard/monitors/${monitorId}`}
+                                                    className="block"
+                                                >
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full"
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </div>
                         </form>
                     </div>
