@@ -37,6 +37,8 @@ class MonitoringService {
                 where: { is_active: true },
             });
 
+            logger.info(`Found ${activeMonitors.length} active monitors to initialize`);
+
             for (const monitor of activeMonitors) {
                 await this.startMonitoring(monitor.id);
             }
@@ -52,15 +54,23 @@ class MonitoringService {
     }
 
     private generateCronExpression(intervalMinutes: number): string {
-        // Convert minutes to cron expression
-        // For intervals less than 60 minutes, run every X minutes
+        // 1. Guard against zero or negative numbers
+        if (intervalMinutes <= 0) {
+            return "* * * * *"; // Default to every minute
+        }
+    
+        // 2. Handle minute-based intervals
         if (intervalMinutes < 60) {
             return `*/${intervalMinutes} * * * *`;
         }
-
-        // For intervals >= 60 minutes, run every X hours
+    
+        // 3. Handle hour-based intervals
         const hours = Math.floor(intervalMinutes / 60);
-        return `0 */${hours} * * *`;
+        
+        // Cap hours at 23 to avoid invalid cron steps
+        const cappedHours = Math.min(hours, 23);
+        
+        return `0 */${cappedHours} * * *`;
     }
 
     async startMonitoring(monitorId: number): Promise<void> {
@@ -80,6 +90,8 @@ class MonitoringService {
             const cronExpression = this.generateCronExpression(
                 monitor.interval,
             );
+
+            logger.info(`Starting monitoring for monitor ${monitorId} with cron expression ${cronExpression}`);
 
             const task = cron.schedule(
                 cronExpression,
