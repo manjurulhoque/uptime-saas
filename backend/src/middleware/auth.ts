@@ -11,6 +11,8 @@ declare global {
             user?: {
                 id: number;
                 email: string;
+                is_admin?: boolean;
+                is_active?: boolean;
             };
         }
     }
@@ -52,7 +54,7 @@ export const authenticateToken = async (
         // Verify user still exists in database
         const user = await prisma.user.findUnique({
             where: { id: decoded.user_id },
-            select: { id: true, email: true },
+            select: { id: true, email: true, is_admin: true, is_active: true },
         });
 
         if (!user) {
@@ -65,7 +67,12 @@ export const authenticateToken = async (
             return res.status(401).json(errorResponse("Invalid token. User not found.", "USER_NOT_FOUND"));
         }
 
-        req.user = user;
+        req.user = {
+            id: user.id,
+            email: user.email,
+            is_admin: user.is_admin,
+            is_active: user.is_active,
+        };
         logger.info("User authenticated successfully", {
             user_id: user.id,
             email: user.email,
@@ -139,5 +146,77 @@ export const optionalAuth = async (
     } catch (error) {
         // For optional auth, we just continue without setting req.user
         next();
+    }
+};
+
+// Admin middleware - requires authentication and admin role
+export const requireAdmin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // First authenticate the user
+        const authHeader = req.headers["authorization"];
+        const token = authHeader && authHeader.split(" ")[1];
+
+        if (!token) {
+            return res.status(401).json(errorResponse("Access denied. No token provided.", "NO_TOKEN"));
+        }
+
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            return res.status(500).json(errorResponse("Server configuration error", "CONFIG_ERROR"));
+        }
+
+        const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+
+        // Verify user exists and is admin
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.user_id },
+            select: { id: true, email: true, is_admin: true, is_active: true },
+        });
+
+        if (!user) {
+            return res.status(401).json(errorResponse("Invalid token. User not found.", "USER_NOT_FOUND"));
+        }
+
+        if (!user.is_admin) {
+            logger.warn("Admin access denied", {
+                user_id: user.id,
+                email: user.email,
+                ip: req.ip,
+                path: req.path,
+            });
+            return res.status(403).json(errorResponse("Admin access required", "ADMIN_REQUIRED"));
+        }
+
+        if (!user.is_active) {
+            return res.status(403).json(errorResponse("Account is inactive", "ACCOUNT_INACTIVE"));
+        }
+
+        req.user = {
+            id: user.id,
+            email: user.email,
+            is_admin: user.is_admin,
+            is_active: user.is_active,
+        };
+
+        next();
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError) {
+            return res.status(401).json(errorResponse("Invalid token.", "INVALID_TOKEN"));
+        }
+
+        if (error instanceof jwt.TokenExpiredError) {
+            return res.status(401).json(errorResponse("Token expired.", "TOKEN_EXPIRED"));
+        }
+
+        logger.error("Admin middleware error", {
+            error: error instanceof Error ? error.message : "Unknown error",
+            ip: req.ip,
+            path: req.path,
+        });
+        return res.status(500).json(errorResponse("Internal server error", "SERVER_ERROR"));
     }
 };

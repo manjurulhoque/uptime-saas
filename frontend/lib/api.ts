@@ -59,6 +59,7 @@ export const api = createApi({
         "MonitorStats",
         "MonitorChecks",
         "MonitorIncidents",
+        "Admin",
     ],
     endpoints: () => ({}),
 });

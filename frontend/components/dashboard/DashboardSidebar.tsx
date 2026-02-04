@@ -25,6 +25,8 @@ import {
     ChevronDown,
     Globe,
     Activity,
+    Users,
+    LayoutDashboard,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -62,9 +64,27 @@ const settingsItems = [
     },
 ];
 
+const adminItems = [
+    {
+        title: "Admin Dashboard",
+        url: "/dashboard/admin",
+        icon: LayoutDashboard,
+    },
+    {
+        title: "Users",
+        url: "/dashboard/admin/users",
+        icon: Users,
+    },
+    {
+        title: "Monitors",
+        url: "/dashboard/admin/monitors",
+        icon: Globe,
+    },
+];
+
 export function DashboardSidebar() {
     const pathname = usePathname();
-    const { session, logout } = useAuth();
+    const { session, logout, isAdmin } = useAuth();
 
     const isActive = (path: string) => {
         if (path === "/dashboard") {
@@ -128,6 +148,29 @@ export function DashboardSidebar() {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
+
+                {isAdmin && (
+                    <SidebarGroup>
+                        <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                {adminItems.map((item) => (
+                                    <SidebarMenuItem key={item.title}>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={isActive(item.url)}
+                                        >
+                                            <Link href={item.url}>
+                                                <item.icon className="h-4 w-4" />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                )}
 
                 <SidebarGroup>
                     <SidebarGroupLabel>Account</SidebarGroupLabel>

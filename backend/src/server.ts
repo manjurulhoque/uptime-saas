@@ -15,6 +15,7 @@ import {
 import { errorHandler, notFoundHandler } from "./middleware/validation";
 import authRoutes from "./routes/auth";
 import monitorsRoutes from "./routes/monitors";
+import adminRoutes from "./routes/admin";
 import monitoringService from "./services/monitoringService";
 
 // Load environment variables
@@ -60,6 +61,7 @@ app.get("/health", (req, res) => {
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/monitors", monitorsRoutes);
+app.use("/api/admin", adminRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
