@@ -402,6 +402,29 @@ router.get("/monitors", requireAdmin, async (req: Request, res: Response) => {
     }
 });
 
+// Get monitor stats (admin) - must be before /monitors/:id
+router.get("/monitors/:id/stats", requireAdmin, async (req: Request, res: Response) => {
+    try {
+        const monitorId = parseInt(req.params.id, 10);
+        const monitoringService = (await import("../services/monitoringService")).default;
+        const stats = await monitoringService.getMonitorStats(monitorId, 30);
+
+        logger.info("Admin fetched monitor stats", {
+            adminId: req.user?.id,
+            monitorId,
+        });
+
+        res.status(200).json(successResponse({ stats }));
+    } catch (error) {
+        logger.error("Admin get monitor stats error", {
+            error: error instanceof Error ? error.message : "Unknown error",
+            adminId: req.user?.id,
+            monitorId: req.params.id,
+        });
+        res.status(500).json(errorResponse("Failed to fetch monitor stats", "FETCH_STATS_ERROR"));
+    }
+});
+
 // Get single monitor (admin view)
 router.get("/monitors/:id", requireAdmin, async (req: Request, res: Response) => {
     try {

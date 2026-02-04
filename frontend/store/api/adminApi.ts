@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import type { MonitorCheck, Incident } from "@/types/monitor";
 
 export interface AdminUser {
     id: number;
@@ -41,6 +42,8 @@ export interface AdminMonitor {
         checks: number;
         incidents: number;
     };
+    checks?: MonitorCheck[];
+    incidents?: Incident[];
 }
 
 export interface AdminStats {
@@ -50,6 +53,17 @@ export interface AdminStats {
     activeMonitors: number;
     totalChecks: number;
     totalIncidents: number;
+}
+
+export interface AdminMonitorStats {
+    totalChecks: number;
+    upChecks: number;
+    downChecks: number;
+    uptimePercentage: number;
+    avgResponseTime: number;
+    incidents: number;
+    lastCheck: string | null;
+    lastIncident: string | null;
 }
 
 export interface CreateUserRequest {
@@ -70,22 +84,30 @@ export interface UpdateUserRequest {
 }
 
 export interface AdminUsersResponse {
-    users: AdminUser[];
-    pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
+    success: boolean;
+    message: string;
+    data: {
+        users: AdminUser[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+        };
     };
 }
 
 export interface AdminMonitorsResponse {
-    monitors: AdminMonitor[];
-    pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
+    success: boolean;
+    message: string;
+    data: {
+        monitors: AdminMonitor[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+        };
     };
 }
 
@@ -163,6 +185,14 @@ export const adminApi = api.injectEndpoints({
             providesTags: (result, error, id) => [{ type: "Admin", id }],
         }),
 
+        getAdminMonitorStats: builder.query<
+            { stats: AdminMonitorStats },
+            number
+        >({
+            query: (id) => `admin/monitors/${id}/stats`,
+            providesTags: (result, error, id) => [{ type: "Admin", id }],
+        }),
+
         deleteAdminMonitor: builder.mutation<{ message: string }, number>({
             query: (id) => ({
                 url: `admin/monitors/${id}`,
@@ -194,6 +224,7 @@ export const {
     useDeleteAdminUserMutation,
     useGetAdminMonitorsQuery,
     useGetAdminMonitorQuery,
+    useGetAdminMonitorStatsQuery,
     useDeleteAdminMonitorMutation,
     useGetAdminStatsQuery,
 } = adminApi;

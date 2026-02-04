@@ -104,12 +104,12 @@ export default function AdminMonitorsPage() {
                                             className="pl-10"
                                         />
                                     </div>
-                                    <Select value={status} onValueChange={setStatus}>
+                                    <Select value={status || "all"} onValueChange={(value) => setStatus(value === "all" ? "" : value)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Filter by status" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">All Statuses</SelectItem>
+                                            <SelectItem value="all">All Statuses</SelectItem>
                                             <SelectItem value="UP">UP</SelectItem>
                                             <SelectItem value="DOWN">DOWN</SelectItem>
                                             <SelectItem value="TIMEOUT">TIMEOUT</SelectItem>
