@@ -2,6 +2,17 @@
 
 A full-stack SaaS application for monitoring website uptime, tracking performance metrics, and sending instant alerts when issues are detected. Built with modern technologies for scalability and reliability.
 
+## 📸 Screenshots
+
+### Home Page
+![Home Page](./screenshots/home.png)
+
+### Add Monitor
+![Add Monitor](./screenshots/add-monitor.png)
+
+### Admin Dashboard
+![Admin Dashboard](./screenshots/admin-dashboard.png)
+
 ## 🚀 Features
 
 ### Core Monitoring Features
